@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight, Wallet } from 'lucide-react';
 
 import { AnimatedValue } from '@/components/shared/animated-value';
@@ -8,9 +7,9 @@ import type { DashboardData } from '@/lib/domain/types';
 import { formatCurrency } from '@/lib/utils/currency';
 import { formatShortDate } from '@/lib/utils/dates';
 import type { Period } from '@/lib/utils/period';
+import { DailyFlowChart } from '@/components/summary/daily-flow-chart';
 
 export function SummaryScreen({ data, period }: { data: DashboardData; period: Period }) {
-  const maxDailyMagnitude = Math.max(...data.trend.map((point) => Math.abs(point.net)), 1);
   const maxExpenseCategory = Math.max(...data.expenseCategories.map((item) => item.amount), 1);
 
   return (
@@ -40,54 +39,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm text-white/58">
-              <span>Evolución del saldo</span>
-              <span>Desde {formatCurrency(data.summary.openingBalance)}</span>
-            </div>
-
-            <div className="-mx-1 overflow-x-auto pb-2 scrollbar-none">
-              <div className="flex min-w-max items-end gap-2 px-1">
-                {data.trend.map((point) => {
-                  const magnitude = Math.max(0, (Math.abs(point.net) / maxDailyMagnitude) * 44);
-                  const hasMovement = point.income > 0 || point.expense > 0;
-                  const isPositive = point.net >= 0;
-                  const href = {
-                    pathname: '/movimientos',
-                    query: {
-                      year: String(period.year),
-                      month: String(period.month),
-                      date: point.date
-                    }
-                  };
-
-                  return (
-                    <Link key={point.date} href={href} className="group flex w-[34px] shrink-0 flex-col items-center gap-2">
-                      <div className="relative h-40 w-full overflow-hidden rounded-[18px] border border-white/6 bg-white/[0.035] transition group-hover:border-white/14 group-hover:bg-white/[0.055]">
-                        <div className="absolute inset-x-[7px] top-1/2 h-px -translate-y-1/2 bg-white/[0.08]" />
-
-                        {hasMovement ? (
-                          <div
-                            className={`absolute inset-x-[7px] rounded-full ${
-                              isPositive
-                                ? 'bottom-1/2 mb-1 bg-[linear-gradient(180deg,rgba(137,179,255,0.96),rgba(73,126,255,0.46))] shadow-[0_10px_24px_rgba(80,123,255,0.32)]'
-                                : 'top-1/2 mt-1 bg-[linear-gradient(180deg,rgba(255,137,168,0.95),rgba(255,76,113,0.42))] shadow-[0_10px_24px_rgba(255,90,122,0.24)]'
-                            }`}
-                            style={{ height: `${Math.max(magnitude, 12)}%` }}
-                          />
-                        ) : (
-                          <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.09]" />
-                        )}
-                      </div>
-                      <span className={`text-center text-[11px] leading-4 ${hasMovement ? 'text-white/60' : 'text-white/30'}`}>
-                        {formatShortDate(point.date)}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <DailyFlowChart trend={data.trend} period={period} openingBalance={data.summary.openingBalance} />
         </div>
       </SurfaceCard>
 
