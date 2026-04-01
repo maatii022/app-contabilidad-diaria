@@ -2,17 +2,15 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight, Wallet } from 'lucide-react';
 
+import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { DashboardData } from '@/lib/domain/types';
-import { formatCurrency, formatPercent } from '@/lib/utils/currency';
+import { formatCurrency } from '@/lib/utils/currency';
 import { formatShortDate } from '@/lib/utils/dates';
 import type { Period } from '@/lib/utils/period';
 
 export function SummaryScreen({ data, period }: { data: DashboardData; period: Period }) {
-  const balanceValues = data.trend.map((point) => point.runningBalance);
-  const maxTrendBalance = Math.max(...balanceValues, data.summary.openingBalance, 1);
-  const minTrendBalance = Math.min(...balanceValues, data.summary.openingBalance);
-  const trendRange = Math.max(maxTrendBalance - minTrendBalance, 1);
+  const maxDailyMagnitude = Math.max(...data.trend.map((point) => Math.abs(point.net)), 1);
   const maxExpenseCategory = Math.max(...data.expenseCategories.map((item) => item.amount), 1);
 
   return (
@@ -23,7 +21,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
             <div>
               <p className="text-sm text-white/55">Saldo del periodo</p>
               <h1 className="mt-2 text-[2.75rem] font-semibold leading-none tracking-tight text-white">
-                {formatCurrency(data.summary.closingBalance)}
+                <AnimatedValue value={data.summary.closingBalance} kind="currency" />
               </h1>
             </div>
             <div className={`rounded-full px-3 py-1 text-xs ${data.summary.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
@@ -32,11 +30,11 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <MetricChip label="Ingresos" value={formatCurrency(data.summary.totalIncome)} icon={<ArrowUpRight size={16} />} tone="income" />
-            <MetricChip label="Gastos" value={formatCurrency(data.summary.totalExpense)} icon={<ArrowDownRight size={16} />} tone="expense" />
+            <MetricChip label="Ingresos" value={<AnimatedValue value={data.summary.totalIncome} kind="currency" />} icon={<ArrowUpRight size={16} />} tone="income" />
+            <MetricChip label="Gastos" value={<AnimatedValue value={data.summary.totalExpense} kind="currency" />} icon={<ArrowDownRight size={16} />} tone="expense" />
             <MetricChip
               label="Ahorro"
-              value={formatPercent(data.summary.savingsRate)}
+              value={<AnimatedValue value={data.summary.savingsRate} kind="percent" />}
               icon={<Wallet size={16} />}
               tone={data.summary.savingsRate >= 0 ? 'income' : 'expense'}
             />
@@ -48,11 +46,12 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
               <span>Desde {formatCurrency(data.summary.openingBalance)}</span>
             </div>
 
-            <div className="-mx-1 overflow-x-auto pb-2">
+            <div className="-mx-1 overflow-x-auto pb-2 scrollbar-none">
               <div className="flex min-w-max items-end gap-2 px-1">
                 {data.trend.map((point) => {
-                  const height = Math.max(14, ((point.runningBalance - minTrendBalance) / trendRange) * 100);
+                  const magnitude = Math.max(0, (Math.abs(point.net) / maxDailyMagnitude) * 44);
                   const hasMovement = point.income > 0 || point.expense > 0;
+                  const isPositive = point.net >= 0;
                   const href = {
                     pathname: '/movimientos',
                     query: {
@@ -63,12 +62,22 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
                   };
 
                   return (
-                    <Link key={point.date} href={href} className="group flex w-[46px] shrink-0 flex-col items-center gap-2">
-                      <div className="relative flex h-36 w-full items-end rounded-[22px] border border-white/6 bg-white/[0.035] px-1.5 pb-1.5 transition group-hover:border-white/14 group-hover:bg-white/[0.055]">
-                        <div
-                          className={`w-full rounded-[16px] ${hasMovement ? 'bg-[linear-gradient(180deg,rgba(137,179,255,0.94),rgba(73,126,255,0.36))] shadow-[0_12px_30px_rgba(80,123,255,0.35)]' : 'bg-white/[0.08]'}`}
-                          style={{ height: `${height}%` }}
-                        />
+                    <Link key={point.date} href={href} className="group flex w-[34px] shrink-0 flex-col items-center gap-2">
+                      <div className="relative h-40 w-full overflow-hidden rounded-[18px] border border-white/6 bg-white/[0.035] transition group-hover:border-white/14 group-hover:bg-white/[0.055]">
+                        <div className="absolute inset-x-[7px] top-1/2 h-px -translate-y-1/2 bg-white/[0.08]" />
+
+                        {hasMovement ? (
+                          <div
+                            className={`absolute inset-x-[7px] rounded-full ${
+                              isPositive
+                                ? 'bottom-1/2 mb-1 bg-[linear-gradient(180deg,rgba(137,179,255,0.96),rgba(73,126,255,0.46))] shadow-[0_10px_24px_rgba(80,123,255,0.32)]'
+                                : 'top-1/2 mt-1 bg-[linear-gradient(180deg,rgba(255,137,168,0.95),rgba(255,76,113,0.42))] shadow-[0_10px_24px_rgba(255,90,122,0.24)]'
+                            }`}
+                            style={{ height: `${Math.max(magnitude, 12)}%` }}
+                          />
+                        ) : (
+                          <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.09]" />
+                        )}
                       </div>
                       <span className={`text-center text-[11px] leading-4 ${hasMovement ? 'text-white/60' : 'text-white/30'}`}>
                         {formatShortDate(point.date)}
@@ -86,8 +95,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
         <SurfaceCard className="p-4">
           <p className="text-sm text-white/55">Flujo neto</p>
           <p className={`mt-3 text-2xl font-semibold ${data.summary.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-            {data.summary.netAmount >= 0 ? '+' : ''}
-            {formatCurrency(data.summary.netAmount)}
+            <AnimatedValue value={data.summary.netAmount} kind="currency" positivePrefix />
           </p>
           <p className="mt-2 text-xs leading-5 text-white/48">Diferencia entre ingresos y gastos del mes activo.</p>
         </SurfaceCard>
@@ -169,7 +177,7 @@ function MetricChip({
   tone
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   icon: ReactNode;
   tone: 'income' | 'expense';
 }) {
@@ -180,7 +188,7 @@ function MetricChip({
     <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-3">
       <div className={`inline-flex rounded-full p-2 ${iconClasses}`}>{icon}</div>
       <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/40">{label}</p>
-      <p className={`mt-1 text-sm font-medium ${toneClasses}`}>{value}</p>
+      <div className={`mt-1 text-sm font-medium ${toneClasses}`}>{value}</div>
     </div>
   );
 }
