@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { AppShell } from '@/components/shell/app-shell';
 import { MovementsScreen } from '@/components/movements/movements-screen';
 import { getTransactions } from '@/lib/data/repository';

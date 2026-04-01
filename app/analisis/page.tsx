@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { AnalyticsScreen } from '@/components/analytics/analytics-screen';
 import { AppShell } from '@/components/shell/app-shell';
 import { getDashboardData } from '@/lib/data/repository';

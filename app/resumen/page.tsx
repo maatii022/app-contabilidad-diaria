@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { AppShell } from '@/components/shell/app-shell';
 import { SummaryScreen } from '@/components/summary/summary-screen';
 import { getDashboardData } from '@/lib/data/repository';

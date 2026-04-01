@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { BudgetScreen } from '@/components/budget/budget-screen';
 import { AppShell } from '@/components/shell/app-shell';
 import { getDashboardData } from '@/lib/data/repository';

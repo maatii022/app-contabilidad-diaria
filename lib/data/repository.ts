@@ -14,6 +14,7 @@ type TransactionRow = {
   description: string;
   category_name: string;
   source_system: 'google_sheets' | 'mock';
+  source_file_id: string | null;
   source_file_name: string | null;
   source_sheet_name: string | null;
   source_row: number | null;
@@ -28,14 +29,21 @@ type MonthlyBudgetRow = {
   planned_amount: number | string;
 };
 
+type OpeningBalanceRow = {
+  year: number;
+  month: number;
+  opening_balance: number | string;
+};
+
 export async function getDashboardData(period: Period = DEFAULT_PERIOD): Promise<DashboardData> {
   const transactions = await getTransactions(period);
   const budgets = await getMonthlyBudgets(period.year, period.month);
+  const openingBalance = await getOpeningBalance(period.year, period.month);
 
   return buildDashboardData({
     year: period.year,
     month: period.month,
-    openingBalance: mockOpeningBalance,
+    openingBalance,
     transactions,
     budgets
   });
@@ -74,6 +82,7 @@ export async function getTransactions(period?: Period): Promise<Transaction[]> {
     description: row.description,
     categoryName: row.category_name,
     sourceSystem: row.source_system,
+    sourceFileId: row.source_file_id ?? undefined,
     sourceFileName: row.source_file_name ?? undefined,
     sourceSheetName: row.source_sheet_name ?? undefined,
     sourceRow: row.source_row ?? undefined
@@ -109,6 +118,28 @@ export async function getMonthlyBudgets(year: number, month: number): Promise<Mo
     categoryName: row.category_name,
     plannedAmount: Number(row.planned_amount)
   }));
+}
+
+export async function getOpeningBalance(year: number, month: number): Promise<number> {
+  const supabase = getServerSupabase();
+
+  if (!supabase) {
+    return mockOpeningBalance;
+  }
+
+  const { data, error } = await supabase
+    .from('monthly_opening_balances')
+    .select('year, month, opening_balance')
+    .eq('year', year)
+    .eq('month', month)
+    .maybeSingle();
+
+  if (error || !data) {
+    return mockOpeningBalance;
+  }
+
+  const row = data as OpeningBalanceRow;
+  return Number(row.opening_balance);
 }
 
 function filterTransactionsByPeriod(transactions: Transaction[], period?: Period) {
