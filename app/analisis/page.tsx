@@ -1,12 +1,18 @@
 import { AnalyticsScreen } from '@/components/analytics/analytics-screen';
 import { AppShell } from '@/components/shell/app-shell';
 import { getDashboardData } from '@/lib/data/repository';
+import { resolvePeriod } from '@/lib/utils/period';
 
-export default async function AnalisisPage() {
-  const data = await getDashboardData();
+export default async function AnalisisPage({
+  searchParams
+}: {
+  searchParams: Promise<{ year?: string; month?: string }>;
+}) {
+  const period = resolvePeriod(await searchParams);
+  const data = await getDashboardData(period);
 
   return (
-    <AppShell>
+    <AppShell period={period}>
       <AnalyticsScreen data={data} />
     </AppShell>
   );

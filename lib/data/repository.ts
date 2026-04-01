@@ -4,9 +4,7 @@ import { mockMonthlyBudgets, mockOpeningBalance, mockTransactions } from '@/lib/
 import type { DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { buildDashboardData } from '@/lib/utils/finance';
-
-const DEFAULT_YEAR = 2026;
-const DEFAULT_MONTH = 3;
+import { DEFAULT_PERIOD, type Period } from '@/lib/utils/period';
 
 type TransactionRow = {
   id: string;
@@ -30,34 +28,40 @@ type MonthlyBudgetRow = {
   planned_amount: number | string;
 };
 
-export async function getDashboardData(): Promise<DashboardData> {
-  const transactions = await getTransactions();
-  const budgets = await getMonthlyBudgets(DEFAULT_YEAR, DEFAULT_MONTH);
+export async function getDashboardData(period: Period = DEFAULT_PERIOD): Promise<DashboardData> {
+  const transactions = await getTransactions(period);
+  const budgets = await getMonthlyBudgets(period.year, period.month);
 
   return buildDashboardData({
-    year: DEFAULT_YEAR,
-    month: DEFAULT_MONTH,
+    year: period.year,
+    month: period.month,
     openingBalance: mockOpeningBalance,
     transactions,
     budgets
   });
 }
 
-export async function getTransactions(): Promise<Transaction[]> {
+export async function getTransactions(period?: Period): Promise<Transaction[]> {
   const supabase = getServerSupabase();
 
   if (!supabase) {
-    return mockTransactions;
+    return filterTransactionsByPeriod(mockTransactions, period);
   }
 
-  const { data, error } = await supabase
+  const query = supabase
     .from('transactions')
     .select('*')
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
 
+  const { data, error } = period
+    ? await query
+        .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
+        .lt('transaction_date', `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`)
+    : await query;
+
   if (error || !data) {
-    return mockTransactions;
+    return filterTransactionsByPeriod(mockTransactions, period);
   }
 
   const rows = data as TransactionRow[];
@@ -105,4 +109,19 @@ export async function getMonthlyBudgets(year: number, month: number): Promise<Mo
     categoryName: row.category_name,
     plannedAmount: Number(row.planned_amount)
   }));
+}
+
+function filterTransactionsByPeriod(transactions: Transaction[], period?: Period) {
+  if (!period) {
+    return transactions;
+  }
+
+  return transactions.filter((transaction) => {
+    const date = new Date(`${transaction.transactionDate}T00:00:00`);
+    return date.getFullYear() === period.year && date.getMonth() + 1 === period.month;
+  });
+}
+
+function nextPeriod(period: Period): Period {
+  return period.month === 12 ? { year: period.year + 1, month: 1 } : { year: period.year, month: period.month + 1 };
 }

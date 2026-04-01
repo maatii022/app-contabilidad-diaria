@@ -10,7 +10,8 @@ import { filterTransactions } from '@/lib/utils/finance';
 export function MovementsScreen({
   transactions,
   filters,
-  categories
+  categories,
+  period
 }: {
   transactions: Transaction[];
   filters: {
@@ -19,16 +20,16 @@ export function MovementsScreen({
     query: string;
   };
   categories: string[];
+  period: {
+    year: number;
+    month: number;
+  };
 }) {
   const filtered = filterTransactions(transactions, filters).sort((a, b) => (a.transactionDate < b.transactionDate ? 1 : -1));
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        eyebrow="Movimiento diario"
-        title="Todo el histórico útil"
-        description="Vista compacta para revisar importes, localizar descripciones y filtrar por categoría sin perder contexto."
-      />
+      <PageHeader title="Movimientos" description="Listado del periodo activo con filtros rápidos por tipo, categoría y texto." />
 
       <SurfaceCard className="p-5">
         <div className="space-y-4">
@@ -43,6 +44,8 @@ export function MovementsScreen({
               />
               <input type="hidden" name="type" value={filters.type} />
               <input type="hidden" name="category" value={filters.category} />
+              <input type="hidden" name="year" value={period.year} />
+              <input type="hidden" name="month" value={period.month} />
               <button className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-slate-950" type="submit">
                 Filtrar
               </button>
@@ -58,7 +61,11 @@ export function MovementsScreen({
                   const label = value === 'all' ? 'Todos' : value === 'expense' ? 'Gastos' : 'Ingresos';
 
                   return (
-                    <Link key={value} href={buildHref({ type: value, category: filters.category, query: filters.query })} className={`filter-chip ${active ? 'filter-chip-active' : ''}`}>
+                    <Link
+                      key={value}
+                      href={buildHref({ type: value, category: filters.category, query: filters.query, year: period.year, month: period.month })}
+                      className={`filter-chip ${active ? 'filter-chip-active' : ''}`}
+                    >
                       {label}
                     </Link>
                   );
@@ -69,13 +76,16 @@ export function MovementsScreen({
             <div>
               <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/38">Categoría</p>
               <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
-                <Link href={buildHref({ type: filters.type, category: 'all', query: filters.query })} className={`filter-chip ${filters.category === 'all' ? 'filter-chip-active' : ''}`}>
+                <Link
+                  href={buildHref({ type: filters.type, category: 'all', query: filters.query, year: period.year, month: period.month })}
+                  className={`filter-chip ${filters.category === 'all' ? 'filter-chip-active' : ''}`}
+                >
                   Todas
                 </Link>
                 {categories.map((category) => (
                   <Link
                     key={category}
-                    href={buildHref({ type: filters.type, category, query: filters.query })}
+                    href={buildHref({ type: filters.type, category, query: filters.query, year: period.year, month: period.month })}
                     className={`filter-chip ${filters.category === category ? 'filter-chip-active' : ''}`}
                   >
                     {category}
@@ -94,28 +104,28 @@ export function MovementsScreen({
         </div>
 
         <div className="mt-4 space-y-3">
-          {filtered.map((transaction) => (
-            <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${transaction.type === 'income' ? 'bg-emerald-300' : 'bg-white/55'}`} />
-                  <p className="truncate text-sm font-medium text-white">{transaction.description}</p>
+          {filtered.length > 0 ? (
+            filtered.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${transaction.type === 'income' ? 'bg-emerald-300' : 'bg-white/55'}`} />
+                    <p className="truncate text-sm font-medium text-white">{transaction.description}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-white/45">
+                    {transaction.categoryName}, {formatShortDate(transaction.transactionDate)}
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-white/45">
-                  {transaction.categoryName}, {formatShortDate(transaction.transactionDate)}
+                <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-white'}`}>
+                  {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </p>
               </div>
-              <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-white'}`}>
-                {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
-              </p>
-            </div>
-          ))}
-
-          {filtered.length === 0 ? (
+            ))
+          ) : (
             <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-white/48">
               No hay resultados con los filtros actuales.
             </div>
-          ) : null}
+          )}
         </div>
       </SurfaceCard>
     </div>
@@ -125,13 +135,20 @@ export function MovementsScreen({
 function buildHref({
   type,
   category,
-  query
+  query,
+  year,
+  month
 }: {
   type: string;
   category: string;
   query: string;
+  year: number;
+  month: number;
 }) {
-  const searchParams: Record<string, string> = {};
+  const searchParams: Record<string, string> = {
+    year: String(year),
+    month: String(month)
+  };
 
   if (type && type !== 'all') searchParams.type = type;
   if (category && category !== 'all') searchParams.category = category;

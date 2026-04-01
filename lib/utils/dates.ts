@@ -19,3 +19,11 @@ export function formatMonthLabel(year: number, month: number) {
 export function toIsoDate(value: Date) {
   return value.toISOString().split('T')[0];
 }
+
+export function formatNumericDate(value: Date) {
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(value);
+}

@@ -78,3 +78,8 @@ button {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+
+select {
+  appearance: none;
+}

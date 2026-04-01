@@ -11,11 +11,7 @@ export function AnalyticsScreen({ data }: { data: DashboardData }) {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        eyebrow="Lectura del mes"
-        title="Análisis directo"
-        description="Qué categorías pesan más, cómo se reparte el ingreso y qué días han movido de verdad el balance."
-      />
+      <PageHeader title="Análisis" description="Qué categorías pesan más, cómo se reparte el ingreso y qué días han movido de verdad el balance." />
 
       <div className="grid grid-cols-2 gap-3">
         <SurfaceCard className="p-4">
@@ -42,20 +38,26 @@ export function AnalyticsScreen({ data }: { data: DashboardData }) {
         </div>
 
         <div className="mt-5 space-y-4">
-          {data.incomeCategories.map((category) => (
-            <div key={category.categoryName} className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-white/72">
-                <span>{category.categoryName}</span>
-                <span>{formatCurrency(category.amount)}</span>
+          {data.incomeCategories.length > 0 ? (
+            data.incomeCategories.map((category) => (
+              <div key={category.categoryName} className="space-y-2">
+                <div className="flex items-center justify-between text-sm text-white/72">
+                  <span>{category.categoryName}</span>
+                  <span>{formatCurrency(category.amount)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-2 rounded-full bg-[linear-gradient(90deg,rgba(52,211,153,0.95),rgba(20,184,166,0.78))]"
+                    style={{ width: `${Math.max(8, category.percentage * 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2 rounded-full bg-white/[0.06]">
-                <div
-                  className="h-2 rounded-full bg-[linear-gradient(90deg,rgba(52,211,153,0.95),rgba(20,184,166,0.78))]"
-                  style={{ width: `${Math.max(8, category.percentage * 100)}%` }}
-                />
-              </div>
+            ))
+          ) : (
+            <div className="rounded-[24px] border border-dashed border-white/10 p-4 text-sm text-white/44">
+              No hay ingresos registrados en este mes.
             </div>
-          ))}
+          )}
         </div>
       </SurfaceCard>
 
@@ -66,24 +68,30 @@ export function AnalyticsScreen({ data }: { data: DashboardData }) {
         </div>
 
         <div className="mt-5 space-y-3">
-          {data.trend.map((point) => {
-            const positive = point.net >= 0;
-            return (
-              <div key={point.date} className="grid grid-cols-[58px_1fr_auto] items-center gap-3">
-                <span className="text-xs text-white/42">{formatShortDate(point.date)}</span>
-                <div className="h-2 rounded-full bg-white/[0.06]">
-                  <div
-                    className={`h-2 rounded-full ${positive ? 'bg-[linear-gradient(90deg,rgba(52,211,153,0.95),rgba(20,184,166,0.78))]' : 'bg-[linear-gradient(90deg,rgba(248,113,113,0.95),rgba(251,146,60,0.75))]'}`}
-                    style={{ width: `${Math.max(10, (Math.abs(point.net) / maxNetMagnitude) * 100)}%` }}
-                  />
+          {data.trend.length > 0 ? (
+            data.trend.map((point) => {
+              const positive = point.net >= 0;
+              return (
+                <div key={point.date} className="grid grid-cols-[58px_1fr_auto] items-center gap-3">
+                  <span className="text-xs text-white/42">{formatShortDate(point.date)}</span>
+                  <div className="h-2 rounded-full bg-white/[0.06]">
+                    <div
+                      className={`h-2 rounded-full ${positive ? 'bg-[linear-gradient(90deg,rgba(52,211,153,0.95),rgba(20,184,166,0.78))]' : 'bg-[linear-gradient(90deg,rgba(248,113,113,0.95),rgba(251,146,60,0.75))]'}`}
+                      style={{ width: `${Math.max(10, (Math.abs(point.net) / maxNetMagnitude) * 100)}%` }}
+                    />
+                  </div>
+                  <div className={`inline-flex items-center gap-1 text-xs ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
+                    {positive ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                    {formatCurrency(Math.abs(point.net))}
+                  </div>
                 </div>
-                <div className={`inline-flex items-center gap-1 text-xs ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {positive ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-                  {formatCurrency(Math.abs(point.net))}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <div className="rounded-[24px] border border-dashed border-white/10 p-4 text-sm text-white/44">
+              Todavía no hay movimiento diario para analizar en este periodo.
+            </div>
+          )}
         </div>
       </SurfaceCard>
     </div>
