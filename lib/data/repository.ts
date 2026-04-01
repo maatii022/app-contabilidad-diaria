@@ -3,8 +3,11 @@ import 'server-only';
 import { mockMonthlyBudgets, mockOpeningBalance, mockTransactions } from '@/lib/domain/mock-data';
 import type { DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
 import { getServerSupabase } from '@/lib/supabase/server';
+import { syncPeriodFromGoogleSheets } from '@/lib/sync/google-sheets';
 import { buildDashboardData } from '@/lib/utils/finance';
-import { DEFAULT_PERIOD, type Period } from '@/lib/utils/period';
+import { getCurrentPeriod, isCurrentPeriod, type Period } from '@/lib/utils/period';
+
+const AUTO_SYNC_INTERVAL_MINUTES = 10;
 
 type TransactionRow = {
   id: string;
@@ -33,10 +36,13 @@ type OpeningBalanceRow = {
   year: number;
   month: number;
   opening_balance: number | string;
+  updated_at?: string;
 };
 
-export async function getDashboardData(period: Period = DEFAULT_PERIOD): Promise<DashboardData> {
-  const transactions = await getTransactions(period);
+export async function getDashboardData(period: Period = getCurrentPeriod()): Promise<DashboardData> {
+  await ensurePeriodDataFresh(period);
+
+  const transactions = await fetchTransactions(period);
   const budgets = await getMonthlyBudgets(period.year, period.month);
   const openingBalance = await getOpeningBalance(period.year, period.month);
 
@@ -50,43 +56,11 @@ export async function getDashboardData(period: Period = DEFAULT_PERIOD): Promise
 }
 
 export async function getTransactions(period?: Period): Promise<Transaction[]> {
-  const supabase = getServerSupabase();
-
-  if (!supabase) {
-    return filterTransactionsByPeriod(mockTransactions, period);
+  if (period) {
+    await ensurePeriodDataFresh(period);
   }
 
-  const query = supabase
-    .from('transactions')
-    .select('*')
-    .order('transaction_date', { ascending: false })
-    .order('created_at', { ascending: false });
-
-  const { data, error } = period
-    ? await query
-        .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
-        .lt('transaction_date', `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`)
-    : await query;
-
-  if (error || !data) {
-    return filterTransactionsByPeriod(mockTransactions, period);
-  }
-
-  const rows = data as TransactionRow[];
-
-  return rows.map((row) => ({
-    id: row.id,
-    type: row.type,
-    transactionDate: row.transaction_date,
-    amount: Number(row.amount),
-    description: row.description,
-    categoryName: row.category_name,
-    sourceSystem: row.source_system,
-    sourceFileId: row.source_file_id ?? undefined,
-    sourceFileName: row.source_file_name ?? undefined,
-    sourceSheetName: row.source_sheet_name ?? undefined,
-    sourceRow: row.source_row ?? undefined
-  }));
+  return fetchTransactions(period);
 }
 
 export async function getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]> {
@@ -129,7 +103,7 @@ export async function getOpeningBalance(year: number, month: number): Promise<nu
 
   const { data, error } = await supabase
     .from('monthly_opening_balances')
-    .select('year, month, opening_balance')
+    .select('year, month, opening_balance, updated_at')
     .eq('year', year)
     .eq('month', month)
     .maybeSingle();
@@ -140,6 +114,73 @@ export async function getOpeningBalance(year: number, month: number): Promise<nu
 
   const row = data as OpeningBalanceRow;
   return Number(row.opening_balance);
+}
+
+export async function ensurePeriodDataFresh(period: Period): Promise<void> {
+  const supabase = getServerSupabase();
+
+  if (!supabase || !isCurrentPeriod(period) || !process.env.APPS_SCRIPT_SYNC_URL || !process.env.APPS_SCRIPT_SYNC_TOKEN) {
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('monthly_opening_balances')
+    .select('updated_at')
+    .eq('year', period.year)
+    .eq('month', period.month)
+    .maybeSingle();
+
+  if (error) {
+    return;
+  }
+
+  const updatedAt = data?.updated_at ? new Date(data.updated_at) : null;
+  const now = new Date();
+  const isFresh = updatedAt ? now.getTime() - updatedAt.getTime() < AUTO_SYNC_INTERVAL_MINUTES * 60 * 1000 : false;
+
+  if (!isFresh) {
+    await syncPeriodFromGoogleSheets(period);
+  }
+}
+
+async function fetchTransactions(period?: Period): Promise<Transaction[]> {
+  const supabase = getServerSupabase();
+
+  if (!supabase) {
+    return filterTransactionsByPeriod(mockTransactions, period);
+  }
+
+  const query = supabase
+    .from('transactions')
+    .select('*')
+    .order('transaction_date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  const { data, error } = period
+    ? await query
+        .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
+        .lt('transaction_date', `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`)
+    : await query;
+
+  if (error || !data) {
+    return filterTransactionsByPeriod(mockTransactions, period);
+  }
+
+  const rows = data as TransactionRow[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    type: row.type,
+    transactionDate: row.transaction_date,
+    amount: Number(row.amount),
+    description: row.description,
+    categoryName: row.category_name,
+    sourceSystem: row.source_system,
+    sourceFileId: row.source_file_id ?? undefined,
+    sourceFileName: row.source_file_name ?? undefined,
+    sourceSheetName: row.source_sheet_name ?? undefined,
+    sourceRow: row.source_row ?? undefined
+  }));
 }
 
 function filterTransactionsByPeriod(transactions: Transaction[], period?: Period) {

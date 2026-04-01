@@ -8,7 +8,7 @@ import { resolvePeriod } from '@/lib/utils/period';
 export default async function MovimientosPage({
   searchParams
 }: {
-  searchParams: Promise<{ type?: string; category?: string; q?: string; year?: string; month?: string }>;
+  searchParams: Promise<{ type?: string; category?: string; q?: string; date?: string; year?: string; month?: string }>;
 }) {
   const params = await searchParams;
   const period = resolvePeriod(params);
@@ -25,7 +25,8 @@ export default async function MovimientosPage({
         filters={{
           type: params.type === 'expense' || params.type === 'income' ? params.type : 'all',
           category: params.category ?? 'all',
-          query: params.q ?? ''
+          query: params.q ?? '',
+          date: params.date ?? ''
         }}
       />
     </AppShell>

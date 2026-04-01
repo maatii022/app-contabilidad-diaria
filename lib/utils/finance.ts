@@ -41,7 +41,7 @@ export function buildDashboardData(input: {
       netAmount,
       savingsRate
     },
-    trend: buildTrend(monthTransactions, input.openingBalance),
+    trend: buildTrend(monthTransactions, input.openingBalance, input.year, input.month),
     expenseCategories: buildCategoryTotals(monthTransactions, 'expense'),
     incomeCategories: buildCategoryTotals(monthTransactions, 'income'),
     latestTransactions: [...monthTransactions].sort((a, b) => (a.transactionDate < b.transactionDate ? 1 : -1)).slice(0, 8),
@@ -49,11 +49,15 @@ export function buildDashboardData(input: {
   };
 }
 
-export function filterTransactions(transactions: Transaction[], options: {
-  type?: TransactionType | 'all';
-  category?: string;
-  query?: string;
-}) {
+export function filterTransactions(
+  transactions: Transaction[],
+  options: {
+    type?: TransactionType | 'all';
+    category?: string;
+    query?: string;
+    date?: string;
+  }
+) {
   const normalizedQuery = options.query?.trim().toLowerCase();
 
   return transactions.filter((transaction) => {
@@ -62,6 +66,10 @@ export function filterTransactions(transactions: Transaction[], options: {
     }
 
     if (options.category && options.category !== 'all' && transaction.categoryName !== options.category) {
+      return false;
+    }
+
+    if (options.date && transaction.transactionDate !== options.date) {
       return false;
     }
 
@@ -98,7 +106,7 @@ function buildCategoryTotals(transactions: Transaction[], type: TransactionType)
     .sort((a, b) => b.amount - a.amount);
 }
 
-function buildTrend(transactions: Transaction[], openingBalance: number): TrendPoint[] {
+function buildTrend(transactions: Transaction[], openingBalance: number, year: number, month: number): TrendPoint[] {
   const grouped = new Map<string, { income: number; expense: number }>();
 
   transactions.forEach((transaction) => {
@@ -112,20 +120,22 @@ function buildTrend(transactions: Transaction[], openingBalance: number): TrendP
   });
 
   let runningBalance = openingBalance;
+  const totalDays = new Date(year, month, 0).getDate();
 
-  return [...grouped.entries()]
-    .sort(([a], [b]) => (a < b ? -1 : 1))
-    .map(([date, values]) => {
-      const net = values.income - values.expense;
-      runningBalance += net;
-      return {
-        date,
-        income: values.income,
-        expense: values.expense,
-        net,
-        runningBalance
-      };
-    });
+  return Array.from({ length: totalDays }, (_, index) => {
+    const date = toIsoDate(new Date(year, month - 1, index + 1));
+    const values = grouped.get(date) ?? { income: 0, expense: 0 };
+    const net = values.income - values.expense;
+    runningBalance += net;
+
+    return {
+      date,
+      income: values.income,
+      expense: values.expense,
+      net,
+      runningBalance
+    };
+  });
 }
 
 function buildBudgetInsights(budgets: MonthlyBudget[], transactions: Transaction[]): BudgetInsight[] {

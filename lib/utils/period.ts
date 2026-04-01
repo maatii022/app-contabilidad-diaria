@@ -5,17 +5,19 @@ export type Period = {
   month: number;
 };
 
-export const DEFAULT_PERIOD: Period = {
-  year: 2026,
-  month: 3
-};
+export function getCurrentPeriod(now = new Date()): Period {
+  return {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1
+  };
+}
 
 export function resolvePeriod(input?: { year?: string; month?: string }): Period {
   const year = Number(input?.year);
   const month = Number(input?.month);
 
   if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
-    return DEFAULT_PERIOD;
+    return getCurrentPeriod();
   }
 
   return { year, month };
@@ -43,4 +45,9 @@ export function getPeriodDateRange(period: Period) {
     start,
     end
   };
+}
+
+export function isCurrentPeriod(period: Period, now = new Date()) {
+  const current = getCurrentPeriod(now);
+  return current.year === period.year && current.month === period.month;
 }

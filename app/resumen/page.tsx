@@ -15,7 +15,7 @@ export default async function ResumenPage({
 
   return (
     <AppShell period={period}>
-      <SummaryScreen data={data} />
+      <SummaryScreen data={data} period={period} />
     </AppShell>
   );
 }

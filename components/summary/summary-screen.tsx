@@ -1,15 +1,19 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight, Wallet } from 'lucide-react';
 
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { DashboardData } from '@/lib/domain/types';
 import { formatCurrency, formatPercent } from '@/lib/utils/currency';
 import { formatShortDate } from '@/lib/utils/dates';
+import type { Period } from '@/lib/utils/period';
 
-export function SummaryScreen({ data }: { data: DashboardData }) {
-  const maxTrendBalance = Math.max(...data.trend.map((point) => point.runningBalance), data.summary.openingBalance, 1);
+export function SummaryScreen({ data, period }: { data: DashboardData; period: Period }) {
+  const balanceValues = data.trend.map((point) => point.runningBalance);
+  const maxTrendBalance = Math.max(...balanceValues, data.summary.openingBalance, 1);
+  const minTrendBalance = Math.min(...balanceValues, data.summary.openingBalance);
+  const trendRange = Math.max(maxTrendBalance - minTrendBalance, 1);
   const maxExpenseCategory = Math.max(...data.expenseCategories.map((item) => item.amount), 1);
-  const hasTrend = data.trend.length > 0;
 
   return (
     <div className="space-y-5">
@@ -28,9 +32,14 @@ export function SummaryScreen({ data }: { data: DashboardData }) {
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <MetricChip label="Ingresos" value={formatCurrency(data.summary.totalIncome)} icon={<ArrowUpRight size={16} />} positive />
-            <MetricChip label="Gastos" value={formatCurrency(data.summary.totalExpense)} icon={<ArrowDownRight size={16} />} />
-            <MetricChip label="Ahorro" value={formatPercent(data.summary.savingsRate)} icon={<Wallet size={16} />} positive={data.summary.savingsRate >= 0} />
+            <MetricChip label="Ingresos" value={formatCurrency(data.summary.totalIncome)} icon={<ArrowUpRight size={16} />} tone="income" />
+            <MetricChip label="Gastos" value={formatCurrency(data.summary.totalExpense)} icon={<ArrowDownRight size={16} />} tone="expense" />
+            <MetricChip
+              label="Ahorro"
+              value={formatPercent(data.summary.savingsRate)}
+              icon={<Wallet size={16} />}
+              tone={data.summary.savingsRate >= 0 ? 'income' : 'expense'}
+            />
           </div>
 
           <div className="space-y-3">
@@ -39,25 +48,36 @@ export function SummaryScreen({ data }: { data: DashboardData }) {
               <span>Desde {formatCurrency(data.summary.openingBalance)}</span>
             </div>
 
-            {hasTrend ? (
-              <div className="flex h-40 items-end gap-2">
-                {data.trend.map((point) => (
-                  <div key={point.date} className="flex flex-1 flex-col items-center gap-2">
-                    <div className="relative flex h-32 w-full items-end rounded-full bg-white/[0.04] px-1 pb-1">
-                      <div
-                        className="w-full rounded-full bg-[linear-gradient(180deg,rgba(137,179,255,0.92),rgba(73,126,255,0.34))] shadow-[0_12px_30px_rgba(80,123,255,0.35)]"
-                        style={{ height: `${Math.max(16, (point.runningBalance / maxTrendBalance) * 100)}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-white/42">{formatShortDate(point.date)}</span>
-                  </div>
-                ))}
+            <div className="-mx-1 overflow-x-auto pb-2">
+              <div className="flex min-w-max items-end gap-2 px-1">
+                {data.trend.map((point) => {
+                  const height = Math.max(14, ((point.runningBalance - minTrendBalance) / trendRange) * 100);
+                  const hasMovement = point.income > 0 || point.expense > 0;
+                  const href = {
+                    pathname: '/movimientos',
+                    query: {
+                      year: String(period.year),
+                      month: String(period.month),
+                      date: point.date
+                    }
+                  };
+
+                  return (
+                    <Link key={point.date} href={href} className="group flex w-[46px] shrink-0 flex-col items-center gap-2">
+                      <div className="relative flex h-36 w-full items-end rounded-[22px] border border-white/6 bg-white/[0.035] px-1.5 pb-1.5 transition group-hover:border-white/14 group-hover:bg-white/[0.055]">
+                        <div
+                          className={`w-full rounded-[16px] ${hasMovement ? 'bg-[linear-gradient(180deg,rgba(137,179,255,0.94),rgba(73,126,255,0.36))] shadow-[0_12px_30px_rgba(80,123,255,0.35)]' : 'bg-white/[0.08]'}`}
+                          style={{ height: `${height}%` }}
+                        />
+                      </div>
+                      <span className={`text-center text-[11px] leading-4 ${hasMovement ? 'text-white/60' : 'text-white/30'}`}>
+                        {formatShortDate(point.date)}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="flex h-36 items-center justify-center rounded-[24px] border border-dashed border-white/10 bg-white/[0.02] text-sm text-white/44">
-                No hay movimientos en este mes todavía.
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </SurfaceCard>
@@ -65,7 +85,7 @@ export function SummaryScreen({ data }: { data: DashboardData }) {
       <div className="grid grid-cols-2 gap-3">
         <SurfaceCard className="p-4">
           <p className="text-sm text-white/55">Flujo neto</p>
-          <p className={`mt-3 text-2xl font-semibold ${data.summary.netAmount >= 0 ? 'text-white' : 'text-rose-300'}`}>
+          <p className={`mt-3 text-2xl font-semibold ${data.summary.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
             {data.summary.netAmount >= 0 ? '+' : ''}
             {formatCurrency(data.summary.netAmount)}
           </p>
@@ -126,7 +146,7 @@ export function SummaryScreen({ data }: { data: DashboardData }) {
                     {transaction.categoryName}, {formatShortDate(transaction.transactionDate)}
                   </p>
                 </div>
-                <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-white'}`}>
+                <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
                   {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </p>
               </div>
@@ -146,20 +166,21 @@ function MetricChip({
   label,
   value,
   icon,
-  positive = false
+  tone
 }: {
   label: string;
   value: string;
   icon: ReactNode;
-  positive?: boolean;
+  tone: 'income' | 'expense';
 }) {
+  const toneClasses = tone === 'income' ? 'text-emerald-300' : 'text-rose-300';
+  const iconClasses = tone === 'income' ? 'bg-emerald-500/12 text-emerald-300' : 'bg-rose-500/12 text-rose-300';
+
   return (
     <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-3">
-      <div className={`inline-flex rounded-full p-2 ${positive ? 'bg-emerald-500/12 text-emerald-300' : 'bg-white/7 text-white/78'}`}>
-        {icon}
-      </div>
+      <div className={`inline-flex rounded-full p-2 ${iconClasses}`}>{icon}</div>
       <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/40">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">{value}</p>
+      <p className={`mt-1 text-sm font-medium ${toneClasses}`}>{value}</p>
     </div>
   );
 }

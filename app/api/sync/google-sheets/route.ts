@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { syncPeriodFromGoogleSheets, syncPeriodRangeFromGoogleSheets } from '@/lib/sync/google-sheets';
-import { DEFAULT_PERIOD } from '@/lib/utils/period';
+import { getCurrentPeriod } from '@/lib/utils/period';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const period = isValidYearMonth(body.year, body.month)
       ? { year: body.year!, month: body.month! }
-      : DEFAULT_PERIOD;
+      : getCurrentPeriod();
 
     const result = await syncPeriodFromGoogleSheets(period);
 

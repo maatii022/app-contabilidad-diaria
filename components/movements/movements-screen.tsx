@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { Transaction, TransactionType } from '@/lib/domain/types';
 import { formatCurrency } from '@/lib/utils/currency';
-import { formatShortDate } from '@/lib/utils/dates';
+import { formatNumericDate, formatShortDate } from '@/lib/utils/dates';
 import { filterTransactions } from '@/lib/utils/finance';
 
 export function MovementsScreen({
@@ -18,6 +18,7 @@ export function MovementsScreen({
     type: TransactionType | 'all';
     category: string;
     query: string;
+    date: string;
   };
   categories: string[];
   period: {
@@ -29,7 +30,7 @@ export function MovementsScreen({
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Movimientos" description="Listado del periodo activo con filtros rápidos por tipo, categoría y texto." />
+      <PageHeader title="Movimientos" description="Listado del periodo activo con filtros rápidos por tipo, categoría, texto y día concreto." />
 
       <SurfaceCard className="p-5">
         <div className="space-y-4">
@@ -44,6 +45,7 @@ export function MovementsScreen({
               />
               <input type="hidden" name="type" value={filters.type} />
               <input type="hidden" name="category" value={filters.category} />
+              <input type="hidden" name="date" value={filters.date} />
               <input type="hidden" name="year" value={period.year} />
               <input type="hidden" name="month" value={period.month} />
               <button className="rounded-2xl bg-white px-4 py-3 text-sm font-medium text-slate-950" type="submit">
@@ -51,6 +53,21 @@ export function MovementsScreen({
               </button>
             </form>
           </div>
+
+          {filters.date ? (
+            <div className="flex items-center justify-between rounded-2xl border border-emerald-400/10 bg-emerald-500/10 px-4 py-3 text-sm">
+              <div>
+                <p className="text-white/52">Día filtrado</p>
+                <p className="mt-1 font-medium text-emerald-300">{formatNumericDate(new Date(`${filters.date}T00:00:00`))}</p>
+              </div>
+              <Link
+                href={buildHref({ type: filters.type, category: filters.category, query: filters.query, date: '', year: period.year, month: period.month })}
+                className="rounded-full border border-white/10 px-3 py-2 text-xs text-white/76 transition hover:bg-white/5"
+              >
+                Quitar día
+              </Link>
+            </div>
+          ) : null}
 
           <div className="space-y-3">
             <div>
@@ -63,7 +80,7 @@ export function MovementsScreen({
                   return (
                     <Link
                       key={value}
-                      href={buildHref({ type: value, category: filters.category, query: filters.query, year: period.year, month: period.month })}
+                      href={buildHref({ type: value, category: filters.category, query: filters.query, date: filters.date, year: period.year, month: period.month })}
                       className={`filter-chip ${active ? 'filter-chip-active' : ''}`}
                     >
                       {label}
@@ -77,7 +94,7 @@ export function MovementsScreen({
               <p className="mb-2 text-xs uppercase tracking-[0.18em] text-white/38">Categoría</p>
               <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                 <Link
-                  href={buildHref({ type: filters.type, category: 'all', query: filters.query, year: period.year, month: period.month })}
+                  href={buildHref({ type: filters.type, category: 'all', query: filters.query, date: filters.date, year: period.year, month: period.month })}
                   className={`filter-chip ${filters.category === 'all' ? 'filter-chip-active' : ''}`}
                 >
                   Todas
@@ -85,7 +102,7 @@ export function MovementsScreen({
                 {categories.map((category) => (
                   <Link
                     key={category}
-                    href={buildHref({ type: filters.type, category, query: filters.query, year: period.year, month: period.month })}
+                    href={buildHref({ type: filters.type, category, query: filters.query, date: filters.date, year: period.year, month: period.month })}
                     className={`filter-chip ${filters.category === category ? 'filter-chip-active' : ''}`}
                   >
                     {category}
@@ -109,14 +126,14 @@ export function MovementsScreen({
               <div key={transaction.id} className="flex items-center justify-between rounded-2xl bg-white/[0.03] px-4 py-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${transaction.type === 'income' ? 'bg-emerald-300' : 'bg-white/55'}`} />
+                    <span className={`h-2.5 w-2.5 rounded-full ${transaction.type === 'income' ? 'bg-emerald-300' : 'bg-rose-300'}`} />
                     <p className="truncate text-sm font-medium text-white">{transaction.description}</p>
                   </div>
                   <p className="mt-1 text-xs text-white/45">
                     {transaction.categoryName}, {formatShortDate(transaction.transactionDate)}
                   </p>
                 </div>
-                <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-white'}`}>
+                <p className={`ml-4 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
                   {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </p>
               </div>
@@ -136,12 +153,14 @@ function buildHref({
   type,
   category,
   query,
+  date,
   year,
   month
 }: {
   type: string;
   category: string;
   query: string;
+  date: string;
   year: number;
   month: number;
 }) {
@@ -153,6 +172,7 @@ function buildHref({
   if (type && type !== 'all') searchParams.type = type;
   if (category && category !== 'all') searchParams.category = category;
   if (query) searchParams.q = query;
+  if (date) searchParams.date = date;
 
   return {
     pathname: '/movimientos',
