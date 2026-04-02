@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDownRight, ArrowUpRight, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
 
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { Transaction, TransactionType } from '@/lib/domain/types';
@@ -65,9 +65,10 @@ export function MovementsScreen({
   }, [transactions, activeDate, searchLower]);
 
   const availableCategories = useMemo(() => {
-    const scopedByType = activeType === 'all'
-      ? searchScopedTransactions
-      : searchScopedTransactions.filter((transaction) => transaction.type === activeType);
+    const scopedByType =
+      activeType === 'all'
+        ? searchScopedTransactions
+        : searchScopedTransactions.filter((transaction) => transaction.type === activeType);
 
     return [...new Set(scopedByType.map((transaction) => transaction.categoryName))].sort((a, b) => a.localeCompare(b));
   }, [searchScopedTransactions, activeType]);
@@ -160,19 +161,6 @@ export function MovementsScreen({
             />
           </div>
 
-          {activeDate ? (
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveDate('')}
-                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100"
-              >
-                {formatSectionLabel(activeDate)}
-                <X size={12} />
-              </button>
-            </div>
-          ) : null}
-
           <div>
             <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-white/34">Categoría</p>
             <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
@@ -203,7 +191,8 @@ export function MovementsScreen({
                   <p className="mt-1 text-xs text-white/42">{group.transactions.length} movimientos</p>
                 </div>
                 <p className={`text-sm font-medium ${group.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                  {group.net > 0 ? '+' : ''}{formatCurrency(group.net)}
+                  {group.net > 0 ? '+' : ''}
+                  {formatCurrency(group.net)}
                 </p>
               </div>
 
@@ -234,8 +223,8 @@ export function MovementsScreen({
       </div>
 
       {deleteCandidate ? (
-        <div className="fixed inset-0 z-[70] flex items-end bg-black/45 p-4 backdrop-blur-sm">
-          <div className="mx-auto w-full max-w-md rounded-[28px] border border-white/10 bg-[#121a31]/95 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md">
+          <div className="w-full max-w-[420px] rounded-[28px] border border-white/10 bg-[#121a31]/95 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
             <h3 className="text-lg font-medium text-white">Eliminar movimiento</h3>
             <p className="mt-2 text-sm leading-6 text-white/62">
               Vas a eliminar <span className="text-white">{deleteCandidate.description}</span>. De momento es solo una prueba visual y no se borrará de Google Sheets todavía.
@@ -296,7 +285,8 @@ function TypeStatButton({
     >
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
       <p className={`mt-2 text-sm font-medium ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
-        {signed && value > 0 ? '+' : ''}{formatCurrency(value)}
+        {signed && value > 0 ? '+' : ''}
+        {formatCurrency(value)}
       </p>
     </button>
   );
@@ -312,11 +302,7 @@ function FilterChip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`filter-chip whitespace-nowrap ${active ? 'filter-chip-active' : ''}`}
-    >
+    <button type="button" onClick={onClick} className={`filter-chip whitespace-nowrap ${active ? 'filter-chip-active' : ''}`}>
       {children}
     </button>
   );
@@ -337,14 +323,21 @@ function SwipeRow({
 }) {
   const startX = useRef<number | null>(null);
   const deltaX = useRef(0);
+  const ACTION_WIDTH = 88;
 
   return (
     <div className="relative overflow-hidden rounded-[22px]">
-      <div className="absolute inset-y-0 right-0 flex w-[84px] items-center justify-center rounded-[22px] bg-rose-500/90 shadow-[0_18px_40px_rgba(225,29,72,0.28)]">
+      <div
+        className={`pointer-events-none absolute inset-y-0 right-0 flex w-[88px] items-center justify-center rounded-[22px] bg-rose-500/95 shadow-[0_18px_40px_rgba(225,29,72,0.26)] transition-opacity duration-200 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
         <button
           type="button"
           onClick={onDelete}
-          className="flex h-full w-full items-center justify-center text-white"
+          className={`pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition ${
+            isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
+          }`}
           aria-label="Eliminar movimiento"
         >
           <Trash2 size={20} />
@@ -352,7 +345,9 @@ function SwipeRow({
       </div>
 
       <div
-        className={`relative flex items-center justify-between rounded-[22px] border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 transition-transform duration-200 ease-out ${isOpen ? '-translate-x-[84px]' : 'translate-x-0'}`}
+        className={`relative flex items-center justify-between rounded-[22px] border border-white/[0.06] bg-[#151e37]/88 px-4 py-3.5 transition-transform duration-200 ease-out ${
+          isOpen ? '-translate-x-[88px]' : 'translate-x-0'
+        }`}
         onTouchStart={(event) => {
           startX.current = event.touches[0]?.clientX ?? null;
           deltaX.current = 0;
@@ -364,28 +359,21 @@ function SwipeRow({
         onTouchEnd={() => {
           if (deltaX.current < -36) {
             onOpen();
-          } else if (deltaX.current > 24) {
+          } else if (deltaX.current > 20) {
             onClose();
           }
           startX.current = null;
           deltaX.current = 0;
         }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            if (isOpen) {
-              onClose();
-            }
-          }}
-          className="absolute inset-0"
-          aria-label={isOpen ? 'Cerrar acciones' : 'Movimiento'}
-        />
-
         <div className="min-w-0 pr-4">
-          <div className="flex items-center gap-2">
-            <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${transaction.type === 'income' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
-              {transaction.type === 'income' ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
+          <div className="flex items-center gap-3">
+            <span
+              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                transaction.type === 'income' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'
+              }`}
+            >
+              {transaction.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
             </span>
             <div className="min-w-0 text-left">
               <p className="truncate text-sm font-medium text-white">{transaction.description}</p>
@@ -393,8 +381,14 @@ function SwipeRow({
             </div>
           </div>
         </div>
-        <p className={`relative z-[1] shrink-0 text-sm font-medium ${transaction.type === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
-          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+        <p
+          className={`shrink-0 text-sm font-medium transition-all duration-200 ${
+            transaction.type === 'income' ? 'text-emerald-300' : 'text-rose-300'
+          } ${isOpen ? 'translate-x-2 opacity-0' : 'translate-x-0 opacity-100'}`}
+          style={{ maxWidth: isOpen ? `calc(100% - ${ACTION_WIDTH}px)` : undefined }}
+        >
+          {transaction.type === 'income' ? '+' : '-'}
+          {formatCurrency(transaction.amount)}
         </p>
       </div>
     </div>
