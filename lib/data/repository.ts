@@ -1,11 +1,12 @@
 import 'server-only';
 
+import { expenseCategories, incomeCategories } from '@/lib/domain/categories';
 import { mockMonthlyBudgets, mockOpeningBalance, mockTransactions } from '@/lib/domain/mock-data';
 import type { DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
 import { getServerSupabase } from '@/lib/supabase/server';
-import { syncPeriodFromGoogleSheets } from '@/lib/sync/google-sheets';
+import { syncPeriodFromGoogleSheets, writeBudgetValuesToGoogleSheets } from '@/lib/sync/google-sheets';
 import { buildDashboardData } from '@/lib/utils/finance';
-import { getCurrentPeriod, isCurrentPeriod, type Period } from '@/lib/utils/period';
+import { getCurrentPeriod, isCurrentPeriod, shiftPeriod, type Period } from '@/lib/utils/period';
 
 const AUTO_SYNC_INTERVAL_MINUTES = 60;
 
@@ -55,6 +56,22 @@ export async function getDashboardData(period: Period = getCurrentPeriod()): Pro
   });
 }
 
+export async function getBudgetPageData(period: Period = getCurrentPeriod()) {
+  await ensurePeriodDataFresh(period);
+
+  const seededFromPrevious = await ensureBudgetSeededFromPrevious(period);
+  const data = await getDashboardData(period);
+  const budgets = await getMonthlyBudgets(period.year, period.month);
+
+  return {
+    data,
+    budgets,
+    seededFromPrevious,
+    expenseCatalog: expenseCategories.map((category) => category.name),
+    incomeCatalog: incomeCategories.map((category) => category.name)
+  };
+}
+
 export async function getTransactions(period?: Period): Promise<Transaction[]> {
   if (period) {
     await ensurePeriodDataFresh(period);
@@ -70,28 +87,13 @@ export async function getMonthlyBudgets(year: number, month: number): Promise<Mo
     return mockMonthlyBudgets.filter((budget) => budget.year === year && budget.month === month);
   }
 
-  const { data, error } = await supabase
-    .from('monthly_budgets')
-    .select('*')
-    .eq('year', year)
-    .eq('month', month)
-    .order('type', { ascending: true })
-    .order('category_name', { ascending: true });
+  const rows = await fetchMonthlyBudgetRows(supabase, year, month);
 
-  if (error || !data) {
+  if (!rows) {
     return mockMonthlyBudgets.filter((budget) => budget.year === year && budget.month === month);
   }
 
-  const rows = data as MonthlyBudgetRow[];
-
-  return rows.map((row) => ({
-    id: row.id,
-    year: row.year,
-    month: row.month,
-    type: row.type,
-    categoryName: row.category_name,
-    plannedAmount: Number(row.planned_amount)
-  }));
+  return mapMonthlyBudgetRows(rows);
 }
 
 export async function getOpeningBalance(year: number, month: number): Promise<number> {
@@ -143,6 +145,66 @@ export async function ensurePeriodDataFresh(period: Period): Promise<void> {
   }
 }
 
+async function ensureBudgetSeededFromPrevious(period: Period): Promise<boolean> {
+  const supabase = getServerSupabase();
+
+  if (!supabase || !process.env.APPS_SCRIPT_SYNC_URL || !process.env.APPS_SCRIPT_SYNC_TOKEN) {
+    return false;
+  }
+
+  const currentRows = await fetchMonthlyBudgetRows(supabase, period.year, period.month);
+
+  if (currentRows && currentRows.length > 0 && currentRows.some((row) => Number(row.planned_amount) > 0)) {
+    return false;
+  }
+
+  const previous = shiftPeriod(period, -1);
+  let previousRows = await fetchMonthlyBudgetRows(supabase, previous.year, previous.month);
+
+  if (!previousRows || previousRows.length === 0) {
+    await syncPeriodFromGoogleSheets(previous);
+    previousRows = await fetchMonthlyBudgetRows(supabase, previous.year, previous.month);
+  }
+
+  if (!previousRows || previousRows.length === 0) {
+    return false;
+  }
+
+  const previousBudgets = mapMonthlyBudgetRows(previousRows).filter((budget) => budget.plannedAmount > 0);
+
+  if (previousBudgets.length === 0) {
+    return false;
+  }
+
+  await writeBudgetValuesToGoogleSheets(period, previousBudgets.map((budget) => ({
+    type: budget.type,
+    categoryName: budget.categoryName,
+    plannedAmount: budget.plannedAmount
+  })));
+
+  const syncTimestamp = new Date().toISOString();
+
+  const { error } = await supabase.from('monthly_budgets').upsert(
+    previousBudgets.map((budget) => ({
+      year: period.year,
+      month: period.month,
+      type: budget.type,
+      category_name: budget.categoryName,
+      planned_amount: budget.plannedAmount,
+      updated_at: syncTimestamp
+    })),
+    {
+      onConflict: 'year,month,type,category_name'
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return true;
+}
+
 async function fetchTransactions(period?: Period): Promise<Transaction[]> {
   const supabase = getServerSupabase();
 
@@ -180,6 +242,37 @@ async function fetchTransactions(period?: Period): Promise<Transaction[]> {
     sourceFileName: row.source_file_name ?? undefined,
     sourceSheetName: row.source_sheet_name ?? undefined,
     sourceRow: row.source_row ?? undefined
+  }));
+}
+
+async function fetchMonthlyBudgetRows(
+  supabase: NonNullable<ReturnType<typeof getServerSupabase>>,
+  year: number,
+  month: number
+): Promise<MonthlyBudgetRow[] | null> {
+  const { data, error } = await supabase
+    .from('monthly_budgets')
+    .select('*')
+    .eq('year', year)
+    .eq('month', month)
+    .order('type', { ascending: true })
+    .order('category_name', { ascending: true });
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data as MonthlyBudgetRow[];
+}
+
+function mapMonthlyBudgetRows(rows: MonthlyBudgetRow[]): MonthlyBudget[] {
+  return rows.map((row) => ({
+    id: row.id,
+    year: row.year,
+    month: row.month,
+    type: row.type,
+    categoryName: row.category_name,
+    plannedAmount: Number(row.planned_amount)
   }));
 }
 

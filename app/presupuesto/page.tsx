@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { BudgetScreen } from '@/components/budget/budget-screen';
 import { AppShell } from '@/components/shell/app-shell';
-import { getDashboardData } from '@/lib/data/repository';
+import { getBudgetPageData } from '@/lib/data/repository';
 import { resolvePeriod } from '@/lib/utils/period';
 
 export default async function PresupuestoPage({
@@ -11,11 +11,18 @@ export default async function PresupuestoPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const period = resolvePeriod(await searchParams);
-  const data = await getDashboardData(period);
+  const { data, budgets, seededFromPrevious, expenseCatalog, incomeCatalog } = await getBudgetPageData(period);
 
   return (
     <AppShell period={period}>
-      <BudgetScreen data={data} />
+      <BudgetScreen
+        data={data}
+        budgets={budgets}
+        period={period}
+        seededFromPrevious={seededFromPrevious}
+        expenseCatalog={expenseCatalog}
+        incomeCatalog={incomeCatalog}
+      />
     </AppShell>
   );
 }

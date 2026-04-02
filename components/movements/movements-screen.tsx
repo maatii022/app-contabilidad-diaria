@@ -120,16 +120,25 @@ export function MovementsScreen({
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between px-1">
-        <h1 className="text-[1.85rem] font-semibold tracking-tight text-white">Movimientos</h1>
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/64 backdrop-blur-xl">
-          <SlidersHorizontal size={14} className="text-white/46" />
-          {visibleTransactions.length} resultados
-        </div>
-      </div>
-
       <SurfaceCard className="p-4">
         <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/64 backdrop-blur-xl">
+              <SlidersHorizontal size={14} className="text-white/46" />
+              {visibleTransactions.length} resultados
+            </div>
+
+            {activeDate ? (
+              <button
+                type="button"
+                onClick={() => setActiveDate('')}
+                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100"
+              >
+                {formatSectionLabel(activeDate)}
+              </button>
+            ) : null}
+          </div>
+
           <div className="relative">
             <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/34" />
             <input
