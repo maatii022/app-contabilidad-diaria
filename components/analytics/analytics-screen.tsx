@@ -6,7 +6,7 @@ import { AnnualBalanceChart } from '@/components/analytics/annual-balance-chart'
 import { DailyPulseStrip } from '@/components/analytics/daily-pulse-strip';
 import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
-import type { AnnualAnalyticsData, CategoryTotal, DashboardData } from '@/lib/domain/types';
+import type { AnnualAnalyticsData, CategoryTotal, DashboardData, Transaction } from '@/lib/domain/types';
 import { formatCurrency, formatPercent } from '@/lib/utils/currency';
 import { formatShortDate } from '@/lib/utils/dates';
 import type { Period } from '@/lib/utils/period';
@@ -103,8 +103,8 @@ export function AnalyticsScreen({
   const monthStatus = data.summary.netAmount >= 0 ? 'mes positivo' : 'mes negativo';
   const maxExpenseAmount = Math.max(...data.expenseCategories.map((item) => item.amount), 1);
   const maxIncomeAmount = Math.max(...data.incomeCategories.map((item) => item.amount), 1);
-  const strongestExpenseMovements = data.latestTransactions.filter((item) => item.type === 'expense').sort((a, b) => b.amount - a.amount).slice(0, 4);
-  const strongestIncomeMovements = data.latestTransactions.filter((item) => item.type === 'income').sort((a, b) => b.amount - a.amount).slice(0, 4);
+  const strongestExpenseMovements = [...data.monthTransactions].filter((item) => item.type === 'expense').sort((a, b) => b.amount - a.amount).slice(0, 4);
+  const strongestIncomeMovements = [...data.monthTransactions].filter((item) => item.type === 'income').sort((a, b) => b.amount - a.amount).slice(0, 4);
 
   return (
     <div className="space-y-5">
@@ -269,7 +269,7 @@ function CategoryListCard({ title, subtitle, categories, maxAmount, tone, emptyT
   );
 }
 
-function MovementList({ items, emptyText, amountClass }: { items: DashboardData['latestTransactions']; emptyText: string; amountClass: string; }) {
+function MovementList({ items, emptyText, amountClass }: { items: Transaction[]; emptyText: string; amountClass: string; }) {
   if (items.length === 0) {
     return <EmptyCardText text={emptyText} />;
   }
@@ -277,13 +277,18 @@ function MovementList({ items, emptyText, amountClass }: { items: DashboardData[
   return (
     <div className="grid grid-cols-1 gap-3">
       {items.map((transaction) => (
-        <div key={transaction.id} className="rounded-[28px] bg-white/[0.03] px-5 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-base font-medium text-white">{transaction.description}</p>
-              <p className="mt-2 text-sm text-white/48">{transaction.categoryName} · {formatShortDate(transaction.transactionDate)}</p>
-            </div>
-            <span className={`shrink-0 text-[1.1rem] font-medium ${amountClass}`}>{transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}</span>
+        <div key={transaction.id} className="flex min-h-[132px] flex-col justify-between rounded-[24px] bg-white/[0.03] px-4 py-4">
+          <p className="text-[1.15rem] font-medium leading-6 text-white break-words">
+            {transaction.description}
+          </p>
+
+          <div className="mt-4 flex items-end justify-between gap-3">
+            <p className="text-sm text-white/48">
+              {transaction.categoryName} · {formatShortDate(transaction.transactionDate)}
+            </p>
+            <span className={`shrink-0 text-[1.1rem] font-medium ${amountClass}`}>
+              {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
+            </span>
           </div>
         </div>
       ))}

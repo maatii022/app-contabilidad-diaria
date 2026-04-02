@@ -75,6 +75,7 @@ export type DashboardData = {
   expenseCategories: CategoryTotal[];
   incomeCategories: CategoryTotal[];
   latestTransactions: Transaction[];
+  monthTransactions: Transaction[];
   budgetInsights: BudgetInsight[];
 };
 
