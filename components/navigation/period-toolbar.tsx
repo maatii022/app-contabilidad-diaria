@@ -6,14 +6,16 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Check, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 import { formatNumericDate } from '@/lib/utils/dates';
-import type { Period } from '@/lib/utils/period';
-import { getPeriodDateRange, getPeriodLabel, shiftPeriod } from '@/lib/utils/period';
+import { comparePeriods, getCurrentPeriod, getPeriodDateRange, getPeriodLabel, MIN_PERIOD, shiftPeriod, type Period } from '@/lib/utils/period';
 
 export function PeriodToolbar({ period }: { period: Period }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const prev = shiftPeriod(period, -1);
   const next = shiftPeriod(period, 1);
+  const currentPeriod = getCurrentPeriod();
+  const canGoPrev = comparePeriods(prev, MIN_PERIOD) >= 0;
+  const canGoNext = comparePeriods(next, currentPeriod) <= 0;
   const { start, end } = getPeriodDateRange(period);
 
   return (
@@ -22,26 +24,34 @@ export function PeriodToolbar({ period }: { period: Period }) {
         <ManualSyncButton period={period} />
 
         <div className="inline-flex items-center gap-2 rounded-[22px] border border-white/10 bg-white/[0.04] px-2 py-2 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
-          <Link
-            href={buildPeriodHref(pathname, searchParams, prev)}
-            aria-label="Mes anterior"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
-          >
-            <ChevronLeft size={16} />
-          </Link>
+          {canGoPrev ? (
+            <Link
+              href={buildPeriodHref(pathname, searchParams, prev)}
+              aria-label="Mes anterior"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <ChevronLeft size={16} />
+            </Link>
+          ) : (
+            <div className="h-9 w-9" />
+          )}
 
           <div className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white/90">
             <CalendarDays size={15} className="text-white/54" />
             <span className="whitespace-nowrap">{getPeriodLabel(period)}</span>
           </div>
 
-          <Link
-            href={buildPeriodHref(pathname, searchParams, next)}
-            aria-label="Mes siguiente"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
-          >
-            <ChevronRight size={16} />
-          </Link>
+          {canGoNext ? (
+            <Link
+              href={buildPeriodHref(pathname, searchParams, next)}
+              aria-label="Mes siguiente"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <ChevronRight size={16} />
+            </Link>
+          ) : (
+            <div className="h-9 w-9" />
+          )}
         </div>
       </div>
 

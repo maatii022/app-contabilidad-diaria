@@ -5,11 +5,12 @@ export type Period = {
   month: number;
 };
 
-export function getCurrentPeriod(now = new Date()): Period {
-  return {
-    year: now.getFullYear(),
-    month: now.getMonth() + 1
-  };
+export const MIN_PERIOD: Period = { year: 2026, month: 1 };
+
+export function getCurrentPeriod(): Period {
+  const now = new Date();
+  const raw = { year: now.getFullYear(), month: now.getMonth() + 1 };
+  return comparePeriods(raw, MIN_PERIOD) < 0 ? MIN_PERIOD : raw;
 }
 
 export function resolvePeriod(input?: { year?: string; month?: string }): Period {
@@ -25,11 +26,16 @@ export function resolvePeriod(input?: { year?: string; month?: string }): Period
 
 export function shiftPeriod(period: Period, delta: number): Period {
   const next = new Date(period.year, period.month - 1 + delta, 1);
+  return { year: next.getFullYear(), month: next.getMonth() + 1 };
+}
 
-  return {
-    year: next.getFullYear(),
-    month: next.getMonth() + 1
-  };
+export function comparePeriods(a: Period, b: Period) {
+  if (a.year !== b.year) return a.year - b.year;
+  return a.month - b.month;
+}
+
+export function isCurrentPeriod(period: Period) {
+  return comparePeriods(period, getCurrentPeriod()) === 0;
 }
 
 export function getPeriodLabel(period: Period) {
@@ -38,16 +44,8 @@ export function getPeriodLabel(period: Period) {
 }
 
 export function getPeriodDateRange(period: Period) {
-  const start = new Date(period.year, period.month - 1, 1);
-  const end = new Date(period.year, period.month, 0);
-
   return {
-    start,
-    end
+    start: new Date(period.year, period.month - 1, 1),
+    end: new Date(period.year, period.month, 0)
   };
-}
-
-export function isCurrentPeriod(period: Period, now = new Date()) {
-  const current = getCurrentPeriod(now);
-  return current.year === period.year && current.month === period.month;
 }
