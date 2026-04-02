@@ -312,11 +312,7 @@ function BudgetRow({
               />
               <span className="pointer-events-none ml-2 text-[11px] text-white/36">€</span>
             </div>
-          ) : (
-            <div className="min-w-[72px] text-right">
-              <span className="text-[1.05rem] font-medium text-white">{formatCompactAmount(row.plannedAmount)}</span>
-            </div>
-          )}
+          ) : null}
 
           <button
             type="button"
