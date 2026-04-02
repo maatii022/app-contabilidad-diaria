@@ -35,7 +35,9 @@ export function MovementsScreen({
   const [activeDate, setActiveDate] = useState(filters.date);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<Transaction | null>(null);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveType(filters.type);
@@ -44,13 +46,19 @@ export function MovementsScreen({
     setActiveDate(filters.date);
     setOpenActionId(null);
     setDeleteCandidate(null);
-    setDismissedIds([]);
+    setDeletedIds([]);
+    setIsDeleting(false);
+    setDeleteError(null);
   }, [filters.type, filters.category, filters.query, filters.date, period.month, period.year]);
 
   const searchLower = query.trim().toLowerCase();
 
   const searchScopedTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
+      if (deletedIds.includes(transaction.id)) {
+        return false;
+      }
+
       if (activeDate && transaction.transactionDate !== activeDate) {
         return false;
       }
@@ -62,7 +70,7 @@ export function MovementsScreen({
       const haystack = `${transaction.description} ${transaction.categoryName}`.toLowerCase();
       return haystack.includes(searchLower);
     });
-  }, [transactions, activeDate, searchLower]);
+  }, [transactions, activeDate, searchLower, deletedIds]);
 
   const availableCategories = useMemo(() => {
     const scopedByType =
@@ -105,9 +113,8 @@ export function MovementsScreen({
   const visibleTransactions = useMemo(() => {
     return contextTransactions
       .filter((transaction) => activeType === 'all' || transaction.type === activeType)
-      .filter((transaction) => !dismissedIds.includes(transaction.id))
       .sort((a, b) => (a.transactionDate < b.transactionDate ? 1 : a.transactionDate > b.transactionDate ? -1 : b.amount - a.amount));
-  }, [contextTransactions, activeType, dismissedIds]);
+  }, [contextTransactions, activeType]);
 
   const grouped = useMemo(() => groupTransactionsByDate(visibleTransactions), [visibleTransactions]);
 
@@ -227,25 +234,64 @@ export function MovementsScreen({
           <div className="w-full max-w-[420px] rounded-[28px] border border-white/10 bg-[#121a31]/95 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
             <h3 className="text-lg font-medium text-white">Eliminar movimiento</h3>
             <p className="mt-2 text-sm leading-6 text-white/62">
-              Vas a eliminar <span className="text-white">{deleteCandidate.description}</span>. De momento es solo una prueba visual y no se borrará de Google Sheets todavía.
+              Vas a eliminar <span className="text-white">{deleteCandidate.description}</span> de Google Sheets y de la app. Esta acción no se puede deshacer.
             </p>
+            {deleteError ? <p className="mt-3 text-sm text-rose-300">{deleteError}</p> : null}
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setDeleteCandidate(null)}
-                className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/72"
+                disabled={isDeleting}
+                onClick={() => {
+                  setDeleteCandidate(null);
+                  setDeleteError(null);
+                }}
+                className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/72 disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setDismissedIds((current) => [...current, deleteCandidate.id]);
-                  setDeleteCandidate(null);
+                disabled={isDeleting}
+                onClick={async () => {
+                  if (!deleteCandidate) return;
+
+                  try {
+                    setIsDeleting(true);
+                    setDeleteError(null);
+
+                    const response = await fetch('/api/transactions/delete', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        transactionId: deleteCandidate.id,
+                        sourceFileId: deleteCandidate.sourceFileId,
+                        sourceFileName: deleteCandidate.sourceFileName,
+                        sourceSheetName: deleteCandidate.sourceSheetName,
+                        sourceRow: deleteCandidate.sourceRow,
+                        type: deleteCandidate.type
+                      })
+                    });
+
+                    const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+
+                    if (!response.ok || !payload?.ok) {
+                      throw new Error(payload?.error || 'No se pudo eliminar el movimiento.');
+                    }
+
+                    setDeletedIds((current) => [...current, deleteCandidate.id]);
+                    setDeleteCandidate(null);
+                    setOpenActionId(null);
+                  } catch (error) {
+                    setDeleteError(error instanceof Error ? error.message : 'No se pudo eliminar el movimiento.');
+                  } finally {
+                    setIsDeleting(false);
+                  }
                 }}
-                className="rounded-[20px] bg-rose-500/90 px-4 py-3 text-sm font-medium text-white"
+                className="rounded-[20px] bg-rose-500/90 px-4 py-3 text-sm font-medium text-white disabled:opacity-60"
               >
-                Eliminar
+                {isDeleting ? 'Eliminando…' : 'Eliminar'}
               </button>
             </div>
           </div>
