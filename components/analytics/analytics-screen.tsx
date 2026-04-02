@@ -93,7 +93,7 @@ export function AnalyticsScreen({
       </div>
 
       <SurfaceCard className="p-5">
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid items-stretch grid-cols-2 gap-5">
           <MovementColumn title="gastos altos" items={topExpenseMovements} amountClass="text-rose-300" emptyText="Sin gastos relevantes este mes." />
           <MovementColumn title="ingresos altos" items={topIncomeMovements} amountClass="text-emerald-300" emptyText="Sin ingresos relevantes este mes." />
         </div>
@@ -209,13 +209,13 @@ function MovementColumn({
   const slots = normalizeMovementSlots(items);
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-medium text-white">{title}</h3>
         <span className="text-xs text-white/45">top 4</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-1 flex-col gap-3">
         {slots.every((item) => item === null) ? (
           <EmptyCardText text={emptyText} />
         ) : (
@@ -223,7 +223,7 @@ function MovementColumn({
             item ? (
               <MovementCard key={item.id} item={item} amountClass={amountClass} />
             ) : (
-              <div key={`empty-${title}-${index}`} className="min-h-[116px] rounded-2xl border border-dashed border-white/8 bg-white/[0.02]" />
+              <div key={`empty-${title}-${index}`} className="min-h-[96px] rounded-2xl border border-dashed border-white/8 bg-white/[0.02]" />
             )
           )
         )}
@@ -234,13 +234,13 @@ function MovementColumn({
 
 function MovementCard({ item, amountClass }: { item: Transaction; amountClass: string }) {
   return (
-    <div className="min-h-[116px] rounded-2xl bg-white/[0.03] px-3 py-3">
-      <div className="flex h-full items-start justify-between gap-3">
+    <div className="min-h-[96px] rounded-2xl bg-white/[0.03] px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-white">{item.description}</p>
-          <p className="mt-2 text-xs leading-6 text-white/44">{item.categoryName} · {formatShortDate(item.transactionDate).toLowerCase()}</p>
+          <p className="truncate text-[15px] font-medium text-white">{item.description}</p>
+          <p className="mt-1.5 text-[13px] leading-5 text-white/44">{item.categoryName} · {formatShortDate(item.transactionDate).toLowerCase()}</p>
         </div>
-        <p className={`shrink-0 text-sm font-medium ${amountClass}`}>
+        <p className={`shrink-0 text-[15px] font-medium ${amountClass}`}>
           {item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}
         </p>
       </div>
