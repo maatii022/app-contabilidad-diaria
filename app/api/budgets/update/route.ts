@@ -42,9 +42,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Supabase no está configurado.' }, { status: 500 });
     }
 
+    const now = new Date();
+    const currentPeriod = {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1
+    };
+
+    const shouldUpdateTemplate = comparePeriods({ year, month }, currentPeriod) >= 0;
+
     await writeBudgetValuesToGoogleSheets(
       { year, month },
-      [{ type, categoryName, plannedAmount }]
+      [{ type, categoryName, plannedAmount }],
+      {
+        updateTemplate: shouldUpdateTemplate
+      }
     );
 
     const { error } = await supabase.from('monthly_budgets').upsert(
@@ -65,11 +76,19 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, updateTemplate: shouldUpdateTemplate });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : 'No se pudo guardar el presupuesto.' },
       { status: 500 }
     );
   }
+}
+
+function comparePeriods(a: { year: number; month: number }, b: { year: number; month: number }) {
+  if (a.year !== b.year) {
+    return a.year - b.year;
+  }
+
+  return a.month - b.month;
 }

@@ -143,7 +143,11 @@ export async function syncPeriodRangeFromGoogleSheets(range: { start: Period; en
   return results;
 }
 
-export async function writeBudgetValuesToGoogleSheets(period: Period, budgets: BudgetWriteInput[]) {
+export async function writeBudgetValuesToGoogleSheets(
+  period: Period,
+  budgets: BudgetWriteInput[],
+  options?: { updateTemplate?: boolean }
+) {
   if (!APPS_SCRIPT_SYNC_URL || !APPS_SCRIPT_SYNC_TOKEN) {
     throw new Error('Faltan APPS_SCRIPT_SYNC_URL o APPS_SCRIPT_SYNC_TOKEN en el entorno.');
   }
@@ -159,6 +163,7 @@ export async function writeBudgetValuesToGoogleSheets(period: Period, budgets: B
       action: 'set_budgets',
       year: period.year,
       month: period.month,
+      updateTemplate: Boolean(options?.updateTemplate),
       budgets: budgets.map((budget) => ({
         type: budget.type,
         categoryName: budget.categoryName,
