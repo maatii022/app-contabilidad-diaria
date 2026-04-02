@@ -40,6 +40,7 @@ export function BudgetScreen({
   const [isPending, startTransition] = useTransition();
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [localBudgets, setLocalBudgets] = useState<Record<string, number>>(() =>
     Object.fromEntries(budgets.map((budget) => [makeKey(budget.type, budget.categoryName), budget.plannedAmount]))
@@ -104,6 +105,7 @@ export function BudgetScreen({
       }
 
       setSavedKey(key);
+      setEditingKey((current) => (current === key ? null : current));
       startTransition(() => router.refresh());
       window.setTimeout(() => setSavedKey((current) => (current === key ? null : current)), 1800);
     } catch (error) {
@@ -117,14 +119,14 @@ export function BudgetScreen({
     <div className="space-y-5">
       <SurfaceCard className="overflow-hidden p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm text-white/54">presupuesto del mes</p>
             <div className="mt-3 flex items-end gap-3">
               <AnimatedValue
                 value={expenseMargin}
                 kind="currency"
                 positivePrefix={expenseMargin > 0}
-                className={`text-[2.7rem] font-semibold leading-none tracking-tight ${expenseMargin >= 0 ? 'text-white' : 'text-rose-300'}`}
+                className={`text-[2.7rem] font-semibold leading-none tracking-tight ${expenseMargin >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}
               />
             </div>
             <p className="mt-3 text-sm text-white/48">
@@ -132,8 +134,12 @@ export function BudgetScreen({
             </p>
           </div>
 
-          <div className={`rounded-full px-4 py-2 text-sm ${expenseMargin >= 0 ? 'bg-emerald-500/14 text-emerald-300' : 'bg-rose-500/14 text-rose-300'}`}>
-            {expenseMargin >= 0 ? 'dentro del presupuesto' : 'presupuesto excedido'}
+          <div
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+              expenseMargin >= 0 ? 'bg-emerald-500/14 text-emerald-300' : 'bg-rose-500/14 text-rose-300'
+            }`}
+          >
+            {expenseMargin >= 0 ? 'dentro' : 'excedido'}
           </div>
         </div>
 
@@ -164,6 +170,7 @@ export function BudgetScreen({
         rows={expenseRows}
         savingKey={savingKey}
         savedKey={savedKey}
+        editingKey={editingKey}
         disabled={isPending}
         onChange={(categoryName, value) => {
           setLocalBudgets((current) => ({
@@ -171,6 +178,7 @@ export function BudgetScreen({
             [makeKey('expense', categoryName)]: value
           }));
         }}
+        onStartEdit={(categoryName) => setEditingKey(makeKey('expense', categoryName))}
         onSave={saveBudget}
       />
 
@@ -180,6 +188,7 @@ export function BudgetScreen({
         rows={incomeRows}
         savingKey={savingKey}
         savedKey={savedKey}
+        editingKey={editingKey}
         disabled={isPending}
         onChange={(categoryName, value) => {
           setLocalBudgets((current) => ({
@@ -187,6 +196,7 @@ export function BudgetScreen({
             [makeKey('income', categoryName)]: value
           }));
         }}
+        onStartEdit={(categoryName) => setEditingKey(makeKey('income', categoryName))}
         onSave={saveBudget}
       />
     </div>
@@ -199,8 +209,10 @@ function BudgetSection({
   rows,
   savingKey,
   savedKey,
+  editingKey,
   disabled,
   onChange,
+  onStartEdit,
   onSave
 }: {
   title: string;
@@ -208,8 +220,10 @@ function BudgetSection({
   rows: BudgetRowModel[];
   savingKey: string | null;
   savedKey: string | null;
+  editingKey: string | null;
   disabled: boolean;
   onChange: (categoryName: string, value: number) => void;
+  onStartEdit: (categoryName: string) => void;
   onSave: (row: BudgetRowModel) => void;
 }) {
   return (
@@ -224,10 +238,12 @@ function BudgetSection({
           <BudgetRow
             key={makeKey(row.type, row.categoryName)}
             row={row}
+            isEditing={editingKey === makeKey(row.type, row.categoryName)}
             isSaving={savingKey === makeKey(row.type, row.categoryName)}
             isSaved={savedKey === makeKey(row.type, row.categoryName)}
             disabled={disabled}
             onChange={onChange}
+            onStartEdit={onStartEdit}
             onSave={onSave}
           />
         ))}
@@ -238,17 +254,21 @@ function BudgetSection({
 
 function BudgetRow({
   row,
+  isEditing,
   isSaving,
   isSaved,
   disabled,
   onChange,
+  onStartEdit,
   onSave
 }: {
   row: BudgetRowModel;
+  isEditing: boolean;
   isSaving: boolean;
   isSaved: boolean;
   disabled: boolean;
   onChange: (categoryName: string, value: number) => void;
+  onStartEdit: (categoryName: string) => void;
   onSave: (row: BudgetRowModel) => void;
 }) {
   const difference = row.type === 'expense' ? row.plannedAmount - row.actualAmount : row.actualAmount - row.plannedAmount;
@@ -267,38 +287,51 @@ function BudgetRow({
           <div className="mt-1 flex items-center gap-3 text-xs text-white/48">
             <span>real {formatCurrency(row.actualAmount)}</span>
             <span className={difference >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
-              {difference >= 0 ? row.type === 'expense' ? 'restan ' : 'por encima ' : row.type === 'expense' ? 'exceso ' : 'faltan '}
+              {difference >= 0 ? (row.type === 'expense' ? 'restan ' : 'por encima ') : row.type === 'expense' ? 'exceso ' : 'faltan '}
               {formatCurrency(Math.abs(difference))}
             </span>
           </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="relative w-[108px]">
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={Number.isFinite(row.plannedAmount) ? row.plannedAmount : 0}
-              onChange={(event) => onChange(row.categoryName, Number(event.target.value || 0))}
-              className="w-full rounded-[18px] border border-white/10 bg-[#151e35] px-3 py-2 text-right text-sm text-white outline-none"
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-white/36">€</span>
+          <div className="relative flex h-12 min-w-[118px] items-center justify-end rounded-[18px] border border-white/10 bg-[#151e35] px-4 text-right text-sm text-white">
+            {isEditing ? (
+              <>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  autoFocus
+                  value={Number.isFinite(row.plannedAmount) ? row.plannedAmount : 0}
+                  onChange={(event) => onChange(row.categoryName, Number(event.target.value || 0))}
+                  className="w-full bg-transparent pr-4 text-right text-sm text-white outline-none"
+                />
+                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-white/36">€</span>
+              </>
+            ) : (
+              <span className="pr-4 text-right text-[1.05rem] font-medium text-white">{formatCompactAmount(row.plannedAmount)}</span>
+            )}
           </div>
           <button
             type="button"
             disabled={disabled || isSaving}
-            onClick={() => onSave(row)}
+            onClick={() => {
+              if (isEditing) {
+                void onSave(row);
+                return;
+              }
+              onStartEdit(row.categoryName);
+            }}
             className={`inline-flex h-10 w-10 items-center justify-center rounded-[16px] border transition ${
               isSaved
                 ? 'border-emerald-400/18 bg-emerald-500/12 text-emerald-300'
                 : 'border-white/10 bg-white/[0.05] text-white/72 hover:bg-white/[0.08]'
             }`}
-            aria-label={`Guardar presupuesto de ${row.categoryName}`}
+            aria-label={isEditing ? `Guardar presupuesto de ${row.categoryName}` : `Editar presupuesto de ${row.categoryName}`}
           >
             {isSaving ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/28 border-t-white/80" />
-            ) : isSaved ? (
+            ) : isEditing || isSaved ? (
               <Check size={16} />
             ) : (
               <PencilLine size={16} />
@@ -325,12 +358,12 @@ function BudgetRow({
 
 function StatPill({ label, value, tone }: { label: string; value: number; tone: 'income' | 'expense' }) {
   return (
-    <div className="rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
+    <div className="flex min-h-[118px] flex-col justify-between rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
+      <p className="max-w-[8rem] text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
       <AnimatedValue
         value={value}
         kind="currency"
-        className={`mt-2 block text-lg font-semibold ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}
+        className={`mt-4 block text-[1.1rem] font-semibold ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}
       />
     </div>
   );
@@ -338,4 +371,11 @@ function StatPill({ label, value, tone }: { label: string; value: number; tone: 
 
 function makeKey(type: TransactionType, categoryName: string) {
   return `${type}:${categoryName}`;
+}
+
+function formatCompactAmount(value: number) {
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(value);
 }
