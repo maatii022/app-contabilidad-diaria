@@ -79,7 +79,70 @@ button {
   display: none;
 }
 
+.loading-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
 
-select {
-  appearance: none;
+.loading-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+  animation: loading-shimmer 1.25s ease-in-out infinite;
+}
+
+.loading-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(122, 255, 208, 0.92);
+  box-shadow: 0 0 0 0 rgba(122, 255, 208, 0.32);
+  animation: loading-pulse 1.4s ease-in-out infinite;
+}
+
+.loading-bar {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(111, 159, 255, 0.72), rgba(111, 159, 255, 0.22));
+  transform-origin: bottom;
+  animation: loading-grow 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.loading-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 45%);
+}
+
+@keyframes loading-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+    box-shadow: 0 0 0 0 rgba(122, 255, 208, 0.22);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 8px rgba(122, 255, 208, 0);
+  }
+}
+
+@keyframes loading-grow {
+  from {
+    opacity: 0;
+    transform: scaleY(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
 }
