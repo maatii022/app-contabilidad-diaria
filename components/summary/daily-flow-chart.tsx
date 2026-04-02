@@ -11,16 +11,14 @@ type Period = {
   month: number;
 };
 
-const ITEM_COLLAPSED_WIDTH = 32;
-const ITEM_EXPANDED_WIDTH = 54;
-const TRACK_COLLAPSED_WIDTH = 12;
-const TRACK_EXPANDED_WIDTH = 28;
-const COLUMN_GAP = 10;
-const TRACK_HEIGHT = 152;
-const ZERO_LINE_Y = TRACK_HEIGHT / 2;
-const BAR_MAX_HEIGHT = 46;
-const BAR_MIN_HEIGHT = 8;
-const LABEL_HEIGHT = 24;
+const DAY_WIDTH = 34;
+const DAY_WIDTH_SELECTED = 58;
+const DAY_GAP = 12;
+const CHART_HEIGHT = 170;
+const GRID_LINES = 4;
+const BAR_WIDTH = 10;
+const BAR_WIDTH_SELECTED = 16;
+const MAX_BAR_HEIGHT = 118;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
@@ -31,15 +29,19 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
     [selectedDate, trend]
   );
 
-  const monthNet = useMemo(
-    () => trend.reduce((sum, point) => sum + point.net, 0),
-    [trend]
+  const monthNet = useMemo(() => trend.reduce((sum, point) => sum + point.net, 0), [trend]);
+  const monthLabel = useMemo(
+    () => new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(period.year, period.month - 1, 1)),
+    [period.month, period.year]
   );
 
-  const maxDailyMagnitude = Math.max(...trend.map((point) => Math.abs(point.net)), 1);
+  const maxValue = Math.max(
+    ...trend.flatMap((point) => [point.income, point.expense]),
+    1
+  );
+
   const chartWidth = trend.reduce((sum, point, index) => {
-    const itemWidth = selectedDate === point.date ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH;
-    return sum + itemWidth + (index === 0 ? 0 : COLUMN_GAP);
+    return sum + (selectedDate === point.date ? DAY_WIDTH_SELECTED : DAY_WIDTH) + (index === 0 ? 0 : DAY_GAP);
   }, 0);
 
   function handleSelect(point: TrendPoint) {
@@ -57,6 +59,9 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
     setSelectedDate(point.date);
   }
 
+  const headerLabel = selectedPoint ? formatSelectedDate(selectedPoint.date) : monthLabel;
+  const headerValue = selectedPoint ? selectedPoint.net : monthNet;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-white/58">
@@ -64,97 +69,101 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
         <span>Desde {formatCurrency(openingBalance)}</span>
       </div>
 
-      <div className="rounded-[24px] border border-white/[0.08] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.035),_transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.022),rgba(255,255,255,0.01))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-        <div className="mb-4 flex min-h-7 items-center justify-between gap-3">
-          <p className="truncate text-[15px] font-medium text-white/78">
-            {selectedPoint ? formatSelectedDate(selectedPoint.date) : formatMonthCaption(period.year, period.month)}
-          </p>
-          <p className={`shrink-0 text-[15px] font-semibold ${getValueTone((selectedPoint?.net ?? monthNet))}`}>
-            {formatSignedCompactCurrency(selectedPoint?.net ?? monthNet)}
+      <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[15px] font-medium capitalize text-white/78">{headerLabel}</p>
+            <div className="mt-2 flex items-center gap-3 text-[12px] text-white/42">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(180deg,rgba(155,216,255,1),rgba(72,127,255,0.82))] shadow-[0_0_10px_rgba(94,146,255,0.28)]" />
+                Ingresos
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(180deg,rgba(255,184,202,0.96),rgba(255,95,130,0.82))] shadow-[0_0_10px_rgba(255,98,134,0.22)]" />
+                Gastos
+              </span>
+            </div>
+          </div>
+
+          <p className={`shrink-0 pt-0.5 text-[15px] font-medium ${headerValue >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+            {headerValue > 0 ? '+' : headerValue < 0 ? '-' : ''}{formatCurrency(Math.abs(headerValue))}
           </p>
         </div>
 
         <div className="scrollbar-none -mx-1 overflow-x-auto pb-1">
           <div className="relative px-1" style={{ width: `${chartWidth}px` }}>
-            <div className="pointer-events-none absolute left-0 right-0 z-0 h-px bg-white/[0.07]" style={{ top: `${ZERO_LINE_Y}px` }} />
+            <div className="pointer-events-none absolute inset-x-1 top-0" style={{ height: `${CHART_HEIGHT}px` }}>
+              {Array.from({ length: GRID_LINES }).map((_, index) => {
+                const ratio = index / (GRID_LINES - 1);
+                const top = ratio * (CHART_HEIGHT - 12) + 6;
+                return (
+                  <div
+                    key={index}
+                    className="absolute inset-x-0 border-t border-dashed border-white/[0.045]"
+                    style={{ top: `${top}px` }}
+                  />
+                );
+              })}
+            </div>
 
-            <div className="relative z-10 flex items-end" style={{ gap: `${COLUMN_GAP}px` }}>
+            <div className="flex items-end" style={{ gap: `${DAY_GAP}px` }}>
               {trend.map((point) => {
                 const isSelected = selectedDate === point.date;
-                const hasMovement = point.income > 0 || point.expense > 0;
-                const isPositive = point.net > 0;
-                const isNegative = point.net < 0;
-                const magnitudeRatio = Math.abs(point.net) / maxDailyMagnitude;
-                const barHeight = hasMovement ? Math.max(BAR_MIN_HEIGHT, Math.round(magnitudeRatio * BAR_MAX_HEIGHT)) : 0;
+                const dayWidth = isSelected ? DAY_WIDTH_SELECTED : DAY_WIDTH;
+                const incomeHeight = getBarHeight(point.income, maxValue);
+                const expenseHeight = getBarHeight(point.expense, maxValue);
                 const dateParts = formatChartDateParts(point.date);
+                const groupHasData = point.income > 0 || point.expense > 0;
 
                 return (
                   <button
                     key={point.date}
                     type="button"
                     onClick={() => handleSelect(point)}
-                    className="group flex shrink-0 flex-col items-center"
-                    style={{ width: `${isSelected ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH}px` }}
                     aria-pressed={isSelected}
-                    aria-label={selectedPoint?.date === point.date ? `Abrir movimientos del ${formatSelectedDate(point.date)}` : `Seleccionar ${formatSelectedDate(point.date)}`}
+                    aria-label={isSelected ? `Abrir movimientos del ${formatSelectedDate(point.date)}` : `Seleccionar ${formatSelectedDate(point.date)}`}
+                    className="group shrink-0 text-left"
+                    style={{ width: `${dayWidth}px` }}
                   >
-                    <div className="relative" style={{ width: `${isSelected ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH}px`, height: `${TRACK_HEIGHT}px` }}>
-                      {isSelected && hasMovement ? (
-                        <div
-                          className={`pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2 py-1 text-[11px] font-semibold leading-none backdrop-blur-md ${
-                            point.net >= 0 ? 'bg-emerald-500/16 text-emerald-300' : 'bg-rose-500/16 text-rose-300'
-                          }`}
-                          style={{ top: `${getLabelTop(point.net)}px` }}
+                    <div
+                      className={`relative rounded-[22px] border transition-all duration-300 ease-out ${
+                        isSelected
+                          ? 'border-white/14 bg-white/[0.04] shadow-[0_14px_36px_rgba(3,8,25,0.24),inset_0_0_0_1px_rgba(255,255,255,0.02)]'
+                          : 'border-transparent bg-transparent'
+                      }`}
+                      style={{ height: `${CHART_HEIGHT}px` }}
+                    >
+                      <div className="absolute left-1/2 bottom-4 top-4 w-px -translate-x-1/2 bg-white/[0.035]" />
+
+                      {isSelected && groupHasData ? (
+                        <div className={`absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-medium leading-none backdrop-blur-md ${point.net >= 0 ? 'bg-emerald-500/16 text-emerald-300' : 'bg-rose-500/16 text-rose-300'}`}
+                          style={{ top: `${getNetLabelTop(point, maxValue)}px` }}
                         >
-                          {formatSignedCompactCurrency(point.net)}
+                          {point.net > 0 ? '+' : point.net < 0 ? '-' : ''}
+                          {formatCompactCurrency(Math.abs(point.net))}
                         </div>
                       ) : null}
 
-                      <div
-                        className={`absolute left-1/2 top-0 h-full -translate-x-1/2 overflow-hidden rounded-full border transition-all duration-300 ease-out ${
-                          isSelected
-                            ? 'border-white/[0.16] bg-white/[0.045] shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_10px_24px_rgba(3,10,26,0.28)]'
-                            : 'border-white/[0.08] bg-white/[0.02]'
-                        }`}
-                        style={{ width: `${isSelected ? TRACK_EXPANDED_WIDTH : TRACK_COLLAPSED_WIDTH}px` }}
-                      >
-                        <div className="absolute left-1/2 top-6 bottom-6 w-px -translate-x-1/2 bg-white/[0.05]" />
-
-                        {hasMovement ? (
-                          <>
-                            {isPositive ? (
-                              <div
-                                className={`absolute left-1/2 bottom-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(168,211,255,0.98),rgba(84,130,255,0.7))] shadow-[0_10px_24px_rgba(76,124,255,0.26)] transition-all duration-300 ease-out ${
-                                  isSelected ? 'w-[22px]' : 'w-[10px]'
-                                }`}
-                                style={{ height: `${barHeight}px` }}
-                              />
-                            ) : null}
-
-                            {isNegative ? (
-                              <div
-                                className={`absolute left-1/2 top-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,184,201,0.98),rgba(255,93,127,0.7))] shadow-[0_10px_24px_rgba(255,88,121,0.22)] transition-all duration-300 ease-out ${
-                                  isSelected ? 'w-[22px]' : 'w-[10px]'
-                                }`}
-                                style={{ height: `${barHeight}px` }}
-                              />
-                            ) : null}
-                          </>
-                        ) : (
-                          <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.14] transition-all duration-300 ${isSelected ? 'h-2.5 w-2.5' : 'h-1.5 w-1.5'}`} />
-                        )}
+                      <div className="absolute inset-x-0 bottom-4 flex items-end justify-center gap-1.5">
+                        <div
+                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(155,216,255,1),rgba(72,127,255,0.82))] shadow-[0_10px_24px_rgba(74,123,255,0.22)] transition-all duration-300 ease-out ${
+                            isSelected ? 'w-[16px]' : 'w-[10px]'
+                          } ${point.income === 0 ? 'opacity-20' : ''}`}
+                          style={{ height: `${incomeHeight}px` }}
+                        />
+                        <div
+                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(255,184,202,0.96),rgba(255,95,130,0.82))] shadow-[0_10px_24px_rgba(255,98,134,0.18)] transition-all duration-300 ease-out ${
+                            isSelected ? 'w-[16px]' : 'w-[10px]'
+                          } ${point.expense === 0 ? 'opacity-20' : ''}`}
+                          style={{ height: `${expenseHeight}px` }}
+                        />
                       </div>
                     </div>
 
-                    <span
-                      className={`mt-3 flex min-h-[38px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${
-                        hasMovement ? 'text-white/62' : 'text-white/30'
-                      } ${isSelected ? 'text-white' : 'group-hover:text-white/78'}`}
-                      style={{ width: `${Math.max(36, isSelected ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH)}px` }}
-                    >
+                    <div className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${isSelected ? 'text-white' : 'text-white/58 group-hover:text-white/82'}`}>
                       <span>{dateParts.day}</span>
                       <span>{dateParts.month}</span>
-                    </span>
+                    </div>
                   </button>
                 );
               })}
@@ -166,18 +175,21 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
   );
 }
 
-function getLabelTop(net: number) {
-  if (net >= 0) {
-    return ZERO_LINE_Y + 8;
+function getBarHeight(value: number, maxValue: number) {
+  if (value <= 0) {
+    return 6;
   }
 
-  return ZERO_LINE_Y - LABEL_HEIGHT - 8;
+  return Math.max(12, Math.round((value / maxValue) * MAX_BAR_HEIGHT));
 }
 
-function getValueTone(value: number) {
-  if (value > 0) return 'text-emerald-300';
-  if (value < 0) return 'text-rose-300';
-  return 'text-white/62';
+function getNetLabelTop(point: TrendPoint, maxValue: number) {
+  const incomeHeight = getBarHeight(point.income, maxValue);
+  const expenseHeight = getBarHeight(point.expense, maxValue);
+  const topHeight = Math.max(incomeHeight, expenseHeight);
+  const top = CHART_HEIGHT - 4 - topHeight;
+
+  return Math.max(18, top - 26);
 }
 
 function formatChartDateParts(value: string) {
@@ -197,18 +209,10 @@ function formatSelectedDate(value: string) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
-function formatMonthCaption(year: number, month: number) {
-  return new Intl.DateTimeFormat('es-ES', {
-    month: 'long',
-    year: 'numeric'
-  }).format(new Date(year, month - 1, 1));
-}
-
-function formatSignedCompactCurrency(value: number) {
-  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-  return `${sign}${new Intl.NumberFormat('es-ES', {
+function formatCompactCurrency(value: number) {
+  return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0
-  }).format(Math.abs(value))}`;
+  }).format(value);
 }
