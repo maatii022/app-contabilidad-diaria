@@ -4,6 +4,7 @@ import { ArrowUpRight, BanknoteArrowDown, CircleDollarSign } from 'lucide-react'
 
 import { AnnualBalanceChart } from '@/components/analytics/annual-balance-chart';
 import { DailyPulseStrip } from '@/components/analytics/daily-pulse-strip';
+import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { AnnualAnalyticsData, CategoryTotal, DashboardData } from '@/lib/domain/types';
 import { formatCurrency, formatPercent } from '@/lib/utils/currency';
@@ -40,9 +41,8 @@ export function AnalyticsScreen({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm text-white/58">{period.year}, acumulado hasta {annualData.months.at(-1)?.label ?? ''}</p>
-                <h1 className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${annualData.netAmount >= 0 ? 'text-white' : 'text-rose-300'}`}>
-                  {annualData.netAmount > 0 ? '+' : annualData.netAmount < 0 ? '-' : ''}
-                  {formatCurrency(Math.abs(annualData.netAmount))}
+                <h1 className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${annualData.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  <AnimatedValue value={annualData.netAmount} kind="currency" positivePrefix className="tabular-nums" />
                 </h1>
               </div>
               <div className={`rounded-full px-3 py-1 text-xs ${annualData.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
@@ -51,9 +51,9 @@ export function AnalyticsScreen({
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <DeltaChip label="ingresos" value={formatCurrency(annualData.totalIncome)} icon={<ArrowUpRight size={16} />} forcePositive />
-              <DeltaChip label="gastos" value={formatCurrency(annualData.totalExpense)} icon={<BanknoteArrowDown size={16} />} />
-              <DeltaChip label="ahorro" value={formatPercent(annualData.savingsRate)} icon={<CircleDollarSign size={16} />} forcePositive={annualData.netAmount >= 0} />
+              <DeltaChip label="ingresos" value={annualData.totalIncome} kind="currency" icon={<ArrowUpRight size={16} />} forcePositive />
+              <DeltaChip label="gastos" value={annualData.totalExpense} kind="currency" icon={<BanknoteArrowDown size={16} />} />
+              <DeltaChip label="ahorro" value={annualData.savingsRate} kind="percent" icon={<CircleDollarSign size={16} />} forcePositive={annualData.netAmount >= 0} />
             </div>
           </div>
         </SurfaceCard>
@@ -115,9 +115,8 @@ export function AnalyticsScreen({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm capitalize text-white/58">{data.summary.monthLabel.toLowerCase()}</p>
-              <h1 className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${data.summary.netAmount >= 0 ? 'text-white' : 'text-rose-300'}`}>
-                {data.summary.netAmount > 0 ? '+' : data.summary.netAmount < 0 ? '-' : ''}
-                {formatCurrency(Math.abs(data.summary.netAmount))}
+              <h1 className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${data.summary.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                <AnimatedValue value={data.summary.netAmount} kind="currency" positivePrefix className="tabular-nums" />
               </h1>
             </div>
             <div className={`rounded-full px-3 py-1 text-xs ${data.summary.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
@@ -126,9 +125,9 @@ export function AnalyticsScreen({
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <DeltaChip label="ingresos" value={formatCurrency(data.summary.totalIncome)} delta={data.summary.totalIncome - previousData.summary.totalIncome} positiveDirection="up" icon={<ArrowUpRight size={16} />} />
-            <DeltaChip label="gastos" value={formatCurrency(data.summary.totalExpense)} delta={data.summary.totalExpense - previousData.summary.totalExpense} positiveDirection="down" icon={<BanknoteArrowDown size={16} />} />
-            <DeltaChip label="ahorro" value={formatPercent(data.summary.savingsRate)} delta={data.summary.netAmount - previousData.summary.netAmount} positiveDirection="up" icon={<CircleDollarSign size={16} />} percentValue />
+            <DeltaChip label="ingresos" value={data.summary.totalIncome} delta={data.summary.totalIncome - previousData.summary.totalIncome} positiveDirection="up" icon={<ArrowUpRight size={16} />} />
+            <DeltaChip label="gastos" value={data.summary.totalExpense} delta={data.summary.totalExpense - previousData.summary.totalExpense} positiveDirection="down" icon={<BanknoteArrowDown size={16} />} />
+            <DeltaChip label="ahorro" value={data.summary.savingsRate} delta={data.summary.netAmount - previousData.summary.netAmount} positiveDirection="up" icon={<CircleDollarSign size={16} />} kind="percent" />
           </div>
         </div>
       </SurfaceCard>
@@ -187,18 +186,35 @@ function ModeSwitch({ monthlyHref, annualHref, active }: { monthlyHref: string; 
   );
 }
 
-function DeltaChip({ label, value, delta, icon, positiveDirection, percentValue = false, forcePositive }: { label: string; value: string; delta?: number; icon: ReactNode; positiveDirection?: 'up' | 'down'; percentValue?: boolean; forcePositive?: boolean; }) {
+function DeltaChip({
+  label,
+  value,
+  delta,
+  icon,
+  positiveDirection,
+  kind = 'currency',
+  forcePositive
+}: {
+  label: string;
+  value: number;
+  delta?: number;
+  icon: ReactNode;
+  positiveDirection?: 'up' | 'down';
+  kind?: 'currency' | 'percent';
+  forcePositive?: boolean;
+}) {
   const positive = forcePositive ?? (positiveDirection === 'up' ? (delta ?? 0) >= 0 : (delta ?? 0) <= 0);
 
   return (
     <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-3">
       <div className={`inline-flex rounded-full p-2 ${positive ? 'bg-emerald-500/12 text-emerald-300' : 'bg-rose-500/12 text-rose-300'}`}>{icon}</div>
       <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/38">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">{value}</p>
+      <p className="mt-1 text-sm font-medium text-white">
+        <AnimatedValue value={value} kind={kind} positivePrefix={false} className="tabular-nums" />
+      </p>
       {typeof delta === 'number' ? (
         <p className={`mt-2 text-xs ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
-          {delta > 0 ? '+' : delta < 0 ? '-' : ''}
-          {percentValue ? formatCurrency(Math.abs(delta)) : formatCurrency(Math.abs(delta))}
+          <AnimatedValue value={delta} kind="currency" positivePrefix className="tabular-nums" />
         </p>
       ) : null}
     </div>
@@ -259,15 +275,15 @@ function MovementList({ items, emptyText, amountClass }: { items: DashboardData[
   }
 
   return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.id} className="rounded-2xl bg-white/[0.03] px-3 py-3">
+    <div className="grid grid-cols-1 gap-3">
+      {items.map((transaction) => (
+        <div key={transaction.id} className="rounded-[28px] bg-white/[0.03] px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-white">{item.description}</p>
-              <p className="mt-1 text-xs text-white/44">{item.categoryName} · {formatShortDate(item.transactionDate).toLowerCase()}</p>
+              <p className="truncate text-base font-medium text-white">{transaction.description}</p>
+              <p className="mt-2 text-sm text-white/48">{transaction.categoryName} · {formatShortDate(transaction.transactionDate)}</p>
             </div>
-            <p className={`shrink-0 text-sm font-medium ${amountClass}`}>{item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount)}</p>
+            <span className={`shrink-0 text-[1.1rem] font-medium ${amountClass}`}>{transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}</span>
           </div>
         </div>
       ))}
@@ -276,5 +292,9 @@ function MovementList({ items, emptyText, amountClass }: { items: DashboardData[
 }
 
 function EmptyCardText({ text }: { text: string }) {
-  return <div className="rounded-[24px] border border-dashed border-white/10 p-4 text-sm text-white/44">{text}</div>;
+  return (
+    <div className="rounded-3xl border border-dashed border-white/10 px-4 py-5 text-sm text-white/42">
+      {text}
+    </div>
+  );
 }
