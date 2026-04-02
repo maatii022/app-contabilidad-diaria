@@ -24,7 +24,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
               </h1>
             </div>
             <div className={`rounded-full px-3 py-1 text-xs ${data.summary.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}`}>
-              {data.summary.netAmount >= 0 ? 'Mes positivo' : 'Mes en descenso'}
+              {data.summary.netAmount >= 0 ? 'Mes positivo' : 'Mes negativo'}
             </div>
           </div>
 
