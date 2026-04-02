@@ -11,12 +11,12 @@ type Period = {
   month: number;
 };
 
-const COLUMN_WIDTH = 34;
-const COLUMN_WIDTH_SELECTED = 46;
-const COLUMN_GAP = 10;
-const CHART_HEIGHT = 188;
-const BAR_MAX_HEIGHT = 76;
-const BAR_MIN_HEIGHT = 14;
+const SLOT_WIDTH = 44;
+const COLUMN_GAP = 8;
+const CHART_HEIGHT = 164;
+const BAR_MAX_HEIGHT = 58;
+const BAR_MIN_HEIGHT = 12;
+const ZERO_LINE_Y = CHART_HEIGHT / 2;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
@@ -28,10 +28,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
   );
 
   const maxDailyMagnitude = Math.max(...trend.map((point) => Math.abs(point.net)), 1);
-  const chartWidth = trend.reduce(
-    (sum, point, index) => sum + (point.date === selectedDate ? COLUMN_WIDTH_SELECTED : COLUMN_WIDTH) + (index === trend.length - 1 ? 0 : COLUMN_GAP),
-    0
-  );
+  const chartWidth = trend.length * SLOT_WIDTH + Math.max(0, trend.length - 1) * COLUMN_GAP;
 
   function handleSelect(point: TrendPoint) {
     if (selectedDate === point.date) {
@@ -56,16 +53,15 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
       </div>
 
       <div className="rounded-[24px] border border-white/8 bg-white/[0.028] p-4">
-        <div className="mb-3 flex min-h-6 items-center justify-between gap-3 text-[12px] leading-5">
+        <div className="mb-3 min-h-6 text-[12px] leading-5">
           {selectedPoint ? (
-            <>
-              <p className="truncate text-white/72">
-                {formatSelectedDate(selectedPoint.date)}
-              </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="truncate text-white/72">{formatSelectedDate(selectedPoint.date)}</p>
               <p className={`shrink-0 font-medium ${selectedPoint.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                {selectedPoint.net > 0 ? '+' : selectedPoint.net < 0 ? '-' : ''}{formatCurrency(Math.abs(selectedPoint.net))}
+                {selectedPoint.net > 0 ? '+' : selectedPoint.net < 0 ? '-' : ''}
+                {formatCurrency(Math.abs(selectedPoint.net))}
               </p>
-            </>
+            </div>
           ) : (
             <p className="text-white/40">Toca un día para ver su neto, vuelve a tocar para abrir Movimientos.</p>
           )}
@@ -80,20 +76,21 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
               const isNegative = point.net < 0;
               const magnitudeRatio = Math.abs(point.net) / maxDailyMagnitude;
               const barHeight = hasMovement ? Math.max(BAR_MIN_HEIGHT, Math.round(magnitudeRatio * BAR_MAX_HEIGHT)) : 8;
-              const widthClass = isSelected ? 'w-[46px]' : 'w-[34px]';
+              const dateParts = formatChartDateParts(point.date);
 
               return (
                 <button
                   key={point.date}
                   type="button"
                   onClick={() => handleSelect(point)}
-                  className={`group flex shrink-0 flex-col items-center transition-all duration-200 ease-out ${widthClass}`}
+                  className="group flex shrink-0 flex-col items-center"
+                  style={{ width: `${SLOT_WIDTH}px` }}
                   aria-label={selectedPoint?.date === point.date ? `Abrir movimientos del ${formatSelectedDate(point.date)}` : `Seleccionar ${formatSelectedDate(point.date)}`}
                 >
                   <div
-                    className={`relative w-full overflow-hidden rounded-[18px] border bg-white/[0.03] transition-all duration-200 ${
+                    className={`relative w-full overflow-hidden rounded-[18px] border bg-white/[0.03] transition-all duration-200 ease-out ${
                       isSelected
-                        ? 'border-white/16 bg-white/[0.05] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]'
+                        ? 'scale-x-[1.08] border-white/18 bg-white/[0.055] shadow-[0_8px_24px_rgba(7,12,28,0.24),inset_0_0_0_1px_rgba(255,255,255,0.03)]'
                         : 'border-white/7'
                     }`}
                     style={{ height: `${CHART_HEIGHT}px` }}
@@ -105,14 +102,14 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                       <>
                         {isPositive ? (
                           <div
-                            className={`absolute left-1/2 bottom-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(160,208,255,0.98),rgba(77,124,255,0.6))] shadow-[0_10px_24px_rgba(76,124,255,0.26)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
+                            className={`absolute left-1/2 bottom-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(160,208,255,0.98),rgba(77,124,255,0.6))] shadow-[0_10px_24px_rgba(76,124,255,0.24)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
                             style={{ height: `${barHeight}px` }}
                           />
                         ) : null}
 
                         {isNegative ? (
                           <div
-                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,180,199,0.98),rgba(255,86,118,0.6))] shadow-[0_10px_24px_rgba(255,88,121,0.22)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
+                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,180,199,0.98),rgba(255,86,118,0.6))] shadow-[0_10px_24px_rgba(255,88,121,0.2)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
                             style={{ height: `${barHeight}px` }}
                           />
                         ) : null}
@@ -121,13 +118,12 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                       <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.16] transition-all duration-200 ${isSelected ? 'h-2.5 w-2.5' : 'h-1.5 w-1.5'}`} />
                     )}
 
-                    {isSelected ? (
+                    {isSelected && hasMovement ? (
                       <div
                         className={`absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2 py-1 text-[11px] font-medium leading-none backdrop-blur-md ${
-                          point.net >= 0
-                            ? 'bg-emerald-500/14 text-emerald-300'
-                            : 'bg-rose-500/14 text-rose-300'
-                        } ${point.net >= 0 ? 'top-3' : 'bottom-3'}`}
+                          point.net >= 0 ? 'bg-emerald-500/16 text-emerald-300' : 'bg-rose-500/16 text-rose-300'
+                        }`}
+                        style={{ top: `${getLabelTop(point.net, barHeight)}px` }}
                       >
                         {point.net > 0 ? '+' : point.net < 0 ? '-' : ''}
                         {formatCompactCurrency(Math.abs(point.net))}
@@ -135,8 +131,9 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                     ) : null}
                   </div>
 
-                  <span className={`mt-3 text-center text-[11px] leading-4 transition-colors ${hasMovement ? 'text-white/58' : 'text-white/30'} ${isSelected ? 'text-white' : 'group-hover:text-white/82'}`}>
-                    {formatChartDate(point.date)}
+                  <span className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${hasMovement ? 'text-white/58' : 'text-white/30'} ${isSelected ? 'text-white' : 'group-hover:text-white/82'}`}>
+                    <span>{dateParts.day}</span>
+                    <span>{dateParts.month}</span>
                   </span>
                 </button>
               );
@@ -148,10 +145,29 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
   );
 }
 
-function formatChartDate(value: string) {
-  return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' })
+function getLabelTop(net: number, barHeight: number) {
+  const pillHeight = 24;
+
+  if (net >= 0) {
+    const centerY = ZERO_LINE_Y - barHeight / 2;
+    return clamp(centerY - pillHeight / 2, 12, ZERO_LINE_Y - pillHeight - 6);
+  }
+
+  const centerY = ZERO_LINE_Y + barHeight / 2;
+  return clamp(centerY - pillHeight / 2, ZERO_LINE_Y + 6, CHART_HEIGHT - pillHeight - 12);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function formatChartDateParts(value: string) {
+  const formatted = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' })
     .format(new Date(`${value}T00:00:00`))
     .replace('.', '');
+
+  const [day, month] = formatted.split(' ');
+  return { day, month };
 }
 
 function formatSelectedDate(value: string) {
