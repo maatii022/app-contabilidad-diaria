@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { TrendPoint } from '@/lib/domain/types';
@@ -16,14 +16,18 @@ const DAY_WIDTH_SELECTED = 74;
 const DAY_GAP = 12;
 const CHART_HEIGHT = 208;
 const GRID_LINES = 4;
-const BAR_WIDTH = 14;
-const BAR_WIDTH_SELECTED = 18;
 const MAX_BAR_HEIGHT = 126;
 const MIN_BAR_HEIGHT = 8;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [period.month, period.year]);
 
   const selectedPoint = useMemo(
     () => trend.find((point) => point.date === selectedDate) ?? null,
@@ -57,7 +61,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
     setSelectedDate(point.date);
   }
 
-  const headerLabel = selectedPoint ? formatSelectedDate(selectedPoint.date) : monthLabel;
+  const headerLabel = selectedPoint ? formatSelectedDate(selectedPoint.date) : monthLabel.toLowerCase();
   const headerValue = selectedPoint ? selectedPoint.net : monthNet;
 
   return (
@@ -92,13 +96,14 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
             </div>
 
             <div className="flex items-end" style={{ gap: `${DAY_GAP}px` }}>
-              {trend.map((point) => {
+              {trend.map((point, index) => {
                 const isSelected = selectedDate === point.date;
                 const dayWidth = isSelected ? DAY_WIDTH_SELECTED : DAY_WIDTH;
                 const incomeHeight = getBarHeight(point.income, maxValue);
                 const expenseHeight = getBarHeight(point.expense, maxValue);
                 const dateParts = formatChartDateParts(point.date);
                 const groupHasData = point.income > 0 || point.expense > 0;
+                const delay = `${Math.min(index * 18, 280)}ms`;
 
                 return (
                   <button
@@ -144,16 +149,26 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
 
                       <div className="absolute inset-x-0 bottom-6 flex items-end justify-center gap-2">
                         <div
-                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(155,216,255,1),rgba(72,127,255,0.82))] shadow-[0_12px_28px_rgba(74,123,255,0.22)] transition-all duration-300 ease-out ${
+                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(155,216,255,1),rgba(72,127,255,0.82))] shadow-[0_12px_28px_rgba(74,123,255,0.22)] transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.income === 0 ? 'opacity-20' : ''}`}
-                          style={{ height: `${incomeHeight}px` }}
+                          style={{
+                            height: `${incomeHeight}px`,
+                            transform: ready ? 'scaleY(1)' : 'scaleY(0.12)',
+                            transformOrigin: 'bottom',
+                            transitionDelay: delay
+                          }}
                         />
                         <div
-                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(255,184,202,0.96),rgba(255,95,130,0.82))] shadow-[0_12px_28px_rgba(255,98,134,0.18)] transition-all duration-300 ease-out ${
+                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(255,184,202,0.96),rgba(255,95,130,0.82))] shadow-[0_12px_28px_rgba(255,98,134,0.18)] transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.expense === 0 ? 'opacity-20' : ''}`}
-                          style={{ height: `${expenseHeight}px` }}
+                          style={{
+                            height: `${expenseHeight}px`,
+                            transform: ready ? 'scaleY(1)' : 'scaleY(0.12)',
+                            transformOrigin: 'bottom',
+                            transitionDelay: delay
+                          }}
                         />
                       </div>
                     </div>
@@ -193,7 +208,8 @@ function getNetLabelTop(point: TrendPoint, maxValue: number) {
 function formatChartDateParts(value: string) {
   const formatted = new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'short' })
     .format(new Date(`${value}T00:00:00`))
-    .replace('.', '');
+    .replace('.', '')
+    .toLowerCase();
 
   const [day, month] = formatted.split(' ');
   return { day, month };
@@ -206,7 +222,8 @@ function formatSelectedDate(value: string) {
     month: 'long'
   })
     .format(new Date(`${value}T00:00:00`))
-    .replace('.', '');
+    .replace('.', '')
+    .toLowerCase();
 }
 
 function formatCompactCurrency(value: number) {

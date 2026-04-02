@@ -17,7 +17,7 @@ export function AnimatedValue({
   kind = 'number',
   locale = 'es-ES',
   currency = 'EUR',
-  durationMs = 680,
+  durationMs = 640,
   className,
   positivePrefix = false
 }: AnimatedValueProps) {

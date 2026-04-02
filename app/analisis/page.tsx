@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { AnalyticsScreen } from '@/components/analytics/analytics-screen';
 import { AppShell } from '@/components/shell/app-shell';
-import { getDashboardData } from '@/lib/data/repository';
+import { getDashboardData, getTransactions } from '@/lib/data/repository';
 import { resolvePeriod, shiftPeriod } from '@/lib/utils/period';
 
 export default async function AnalisisPage({
@@ -12,11 +12,15 @@ export default async function AnalisisPage({
 }) {
   const period = resolvePeriod(await searchParams);
   const previousPeriod = shiftPeriod(period, -1);
-  const [data, previousData] = await Promise.all([getDashboardData(period), getDashboardData(previousPeriod)]);
+  const [data, previousData, transactions] = await Promise.all([
+    getDashboardData(period),
+    getDashboardData(previousPeriod),
+    getTransactions(period)
+  ]);
 
   return (
     <AppShell period={period}>
-      <AnalyticsScreen period={period} data={data} previousData={previousData} />
+      <AnalyticsScreen period={period} data={data} previousData={previousData} transactions={transactions} />
     </AppShell>
   );
 }
