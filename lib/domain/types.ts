@@ -10,6 +10,7 @@ export type Transaction = {
   description: string;
   categoryName: string;
   sourceSystem: 'google_sheets' | 'mock';
+  sourceFileId?: string;
   sourceFileName?: string;
   sourceSheetName?: string;
   sourceRow?: number;
@@ -77,6 +78,40 @@ export type DashboardData = {
   budgetInsights: BudgetInsight[];
 };
 
+export type GoogleSheetsSyncPayload = {
+  ok: boolean;
+  year: number;
+  month: number;
+  fileId: string;
+  fileName: string;
+  sheetName: string;
+  summarySheetName: string;
+  openingBalance: number;
+  transactions: Array<{
+    type: TransactionType;
+    transactionDate: string;
+    amount: number;
+    description: string;
+    categoryName: string;
+    sourceRow: number;
+  }>;
+  budgets: Array<{
+    type: TransactionType;
+    categoryName: string;
+    plannedAmount: number;
+  }>;
+};
+
+export type GoogleSheetsSyncResult = {
+  period: {
+    year: number;
+    month: number;
+  };
+  fileName: string;
+  transactionsUpserted: number;
+  budgetsUpserted: number;
+  openingBalanceUpserted: boolean;
+};
 
 export type AnnualBalancePoint = {
   month: number;
