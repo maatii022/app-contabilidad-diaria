@@ -294,24 +294,30 @@ function BudgetRow({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <div className="relative flex h-12 min-w-[118px] items-center justify-end rounded-[18px] border border-white/10 bg-[#151e35] px-4 text-right text-sm text-white">
-            {isEditing ? (
-              <>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  autoFocus
-                  value={Number.isFinite(row.plannedAmount) ? row.plannedAmount : 0}
-                  onChange={(event) => onChange(row.categoryName, Number(event.target.value || 0))}
-                  className="w-full bg-transparent pr-4 text-right text-sm text-white outline-none"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-white/36">€</span>
-              </>
-            ) : (
-              <span className="pr-4 text-right text-[1.05rem] font-medium text-white">{formatCompactAmount(row.plannedAmount)}</span>
-            )}
-          </div>
+          {isEditing ? (
+            <div className="relative flex h-12 w-[104px] items-center justify-end rounded-[18px] border border-white/10 bg-[#151e35] px-3 text-right text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+              <input
+                type="text"
+                inputMode="decimal"
+                autoFocus
+                value={Number.isFinite(row.plannedAmount) ? String(row.plannedAmount).replace('.', ',') : '0'}
+                onChange={(event) => onChange(row.categoryName, parseBudgetInput(event.target.value))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void onSave(row);
+                  }
+                }}
+                className="w-full bg-transparent text-right text-[1.05rem] font-medium text-white outline-none"
+              />
+              <span className="pointer-events-none ml-2 text-[11px] text-white/36">€</span>
+            </div>
+          ) : (
+            <div className="min-w-[72px] text-right">
+              <span className="text-[1.05rem] font-medium text-white">{formatCompactAmount(row.plannedAmount)}</span>
+            </div>
+          )}
+
           <button
             type="button"
             disabled={disabled || isSaving}
@@ -378,4 +384,10 @@ function formatCompactAmount(value: number) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(value);
+}
+
+function parseBudgetInput(value: string) {
+  const normalized = value.replace(/\s/g, '').replace('€', '').replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
