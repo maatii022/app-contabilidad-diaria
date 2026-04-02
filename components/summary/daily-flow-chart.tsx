@@ -11,12 +11,16 @@ type Period = {
   month: number;
 };
 
-const SLOT_WIDTH = 44;
-const COLUMN_GAP = 8;
-const CHART_HEIGHT = 164;
-const BAR_MAX_HEIGHT = 58;
-const BAR_MIN_HEIGHT = 12;
+const ITEM_COLLAPSED_WIDTH = 32;
+const ITEM_EXPANDED_WIDTH = 58;
+const TRACK_COLLAPSED_WIDTH = 16;
+const TRACK_EXPANDED_WIDTH = 44;
+const COLUMN_GAP = 10;
+const CHART_HEIGHT = 144;
+const BAR_MAX_HEIGHT = 54;
+const BAR_MIN_HEIGHT = 10;
 const ZERO_LINE_Y = CHART_HEIGHT / 2;
+const LABEL_PILL_HEIGHT = 24;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
@@ -28,7 +32,10 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
   );
 
   const maxDailyMagnitude = Math.max(...trend.map((point) => Math.abs(point.net)), 1);
-  const chartWidth = trend.length * SLOT_WIDTH + Math.max(0, trend.length - 1) * COLUMN_GAP;
+  const chartWidth = trend.reduce((sum, point, index) => {
+    const itemWidth = selectedDate === point.date ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH;
+    return sum + itemWidth + (index === 0 ? 0 : COLUMN_GAP);
+  }, 0);
 
   function handleSelect(point: TrendPoint) {
     if (selectedDate === point.date) {
@@ -75,7 +82,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
               const isPositive = point.net > 0;
               const isNegative = point.net < 0;
               const magnitudeRatio = Math.abs(point.net) / maxDailyMagnitude;
-              const barHeight = hasMovement ? Math.max(BAR_MIN_HEIGHT, Math.round(magnitudeRatio * BAR_MAX_HEIGHT)) : 8;
+              const barHeight = hasMovement ? Math.max(BAR_MIN_HEIGHT, Math.round(magnitudeRatio * BAR_MAX_HEIGHT)) : 0;
               const dateParts = formatChartDateParts(point.date);
 
               return (
@@ -84,38 +91,42 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                   type="button"
                   onClick={() => handleSelect(point)}
                   className="group flex shrink-0 flex-col items-center"
-                  style={{ width: `${SLOT_WIDTH}px` }}
+                  style={{ width: `${isSelected ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH}px` }}
+                  aria-pressed={isSelected}
                   aria-label={selectedPoint?.date === point.date ? `Abrir movimientos del ${formatSelectedDate(point.date)}` : `Seleccionar ${formatSelectedDate(point.date)}`}
                 >
                   <div
-                    className={`relative w-full overflow-hidden rounded-[18px] border bg-white/[0.03] transition-all duration-200 ease-out ${
+                    className={`relative overflow-hidden rounded-[20px] border bg-white/[0.03] transition-all duration-250 ease-out ${
                       isSelected
-                        ? 'scale-x-[1.08] border-white/18 bg-white/[0.055] shadow-[0_8px_24px_rgba(7,12,28,0.24),inset_0_0_0_1px_rgba(255,255,255,0.03)]'
+                        ? 'border-white/18 bg-white/[0.055] shadow-[0_8px_24px_rgba(7,12,28,0.24),inset_0_0_0_1px_rgba(255,255,255,0.03)]'
                         : 'border-white/7'
                     }`}
-                    style={{ height: `${CHART_HEIGHT}px` }}
+                    style={{
+                      width: `${isSelected ? TRACK_EXPANDED_WIDTH : TRACK_COLLAPSED_WIDTH}px`,
+                      height: `${CHART_HEIGHT}px`
+                    }}
                   >
                     <div className="absolute left-1/2 top-3 bottom-3 w-px -translate-x-1/2 bg-white/[0.05]" />
-                    <div className="absolute inset-x-2 top-1/2 h-px -translate-y-1/2 bg-white/[0.08]" />
+                    <div className="absolute inset-x-1.5 top-1/2 h-px -translate-y-1/2 bg-white/[0.08]" />
 
                     {hasMovement ? (
                       <>
                         {isPositive ? (
                           <div
-                            className={`absolute left-1/2 bottom-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(160,208,255,0.98),rgba(77,124,255,0.6))] shadow-[0_10px_24px_rgba(76,124,255,0.24)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
+                            className={`absolute left-1/2 bottom-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(160,208,255,0.98),rgba(77,124,255,0.6))] shadow-[0_10px_24px_rgba(76,124,255,0.24)] transition-all duration-250 ${isSelected ? 'w-[18px]' : 'w-[12px]'}`}
                             style={{ height: `${barHeight}px` }}
                           />
                         ) : null}
 
                         {isNegative ? (
                           <div
-                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,180,199,0.98),rgba(255,86,118,0.6))] shadow-[0_10px_24px_rgba(255,88,121,0.2)] transition-all duration-200 ${isSelected ? 'w-[18px]' : 'w-[14px]'}`}
+                            className={`absolute left-1/2 top-1/2 -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(255,180,199,0.98),rgba(255,86,118,0.6))] shadow-[0_10px_24px_rgba(255,88,121,0.2)] transition-all duration-250 ${isSelected ? 'w-[18px]' : 'w-[12px]'}`}
                             style={{ height: `${barHeight}px` }}
                           />
                         ) : null}
                       </>
                     ) : (
-                      <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.16] transition-all duration-200 ${isSelected ? 'h-2.5 w-2.5' : 'h-1.5 w-1.5'}`} />
+                      <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.16] transition-all duration-250 ${isSelected ? 'h-2.5 w-2.5' : 'h-1.5 w-1.5'}`} />
                     )}
 
                     {isSelected && hasMovement ? (
@@ -123,7 +134,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                         className={`absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2 py-1 text-[11px] font-medium leading-none backdrop-blur-md ${
                           point.net >= 0 ? 'bg-emerald-500/16 text-emerald-300' : 'bg-rose-500/16 text-rose-300'
                         }`}
-                        style={{ top: `${getLabelTop(point.net, barHeight)}px` }}
+                        style={{ top: `${getLabelTop(point.net)}px` }}
                       >
                         {point.net > 0 ? '+' : point.net < 0 ? '-' : ''}
                         {formatCompactCurrency(Math.abs(point.net))}
@@ -131,7 +142,12 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                     ) : null}
                   </div>
 
-                  <span className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${hasMovement ? 'text-white/58' : 'text-white/30'} ${isSelected ? 'text-white' : 'group-hover:text-white/82'}`}>
+                  <span
+                    className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${
+                      hasMovement ? 'text-white/58' : 'text-white/30'
+                    } ${isSelected ? 'text-white' : 'group-hover:text-white/82'}`}
+                    style={{ width: `${Math.max(42, isSelected ? ITEM_EXPANDED_WIDTH : ITEM_COLLAPSED_WIDTH)}px` }}
+                  >
                     <span>{dateParts.day}</span>
                     <span>{dateParts.month}</span>
                   </span>
@@ -145,20 +161,12 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
   );
 }
 
-function getLabelTop(net: number, barHeight: number) {
-  const pillHeight = 24;
-
+function getLabelTop(net: number) {
   if (net >= 0) {
-    const centerY = ZERO_LINE_Y - barHeight / 2;
-    return clamp(centerY - pillHeight / 2, 12, ZERO_LINE_Y - pillHeight - 6);
+    return ZERO_LINE_Y + 8;
   }
 
-  const centerY = ZERO_LINE_Y + barHeight / 2;
-  return clamp(centerY - pillHeight / 2, ZERO_LINE_Y + 6, CHART_HEIGHT - pillHeight - 12);
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
+  return ZERO_LINE_Y - LABEL_PILL_HEIGHT - 8;
 }
 
 function formatChartDateParts(value: string) {
