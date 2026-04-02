@@ -33,6 +33,8 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
   try {
     const payload = await fetchMonthPayload(period);
 
+    const syncTimestamp = new Date().toISOString();
+
     const txRows = payload.transactions.map((transaction) => ({
       source_system: 'google_sheets',
       source_file_id: payload.fileId,
@@ -44,7 +46,8 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       amount: transaction.amount,
       description: transaction.description,
       category_name: transaction.categoryName,
-      last_synced_at: new Date().toISOString()
+      last_synced_at: syncTimestamp,
+      updated_at: syncTimestamp
     }));
 
     const budgetRows = payload.budgets.map((budget) => ({
@@ -52,7 +55,8 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       month: payload.month,
       type: budget.type,
       category_name: budget.categoryName,
-      planned_amount: budget.plannedAmount
+      planned_amount: budget.plannedAmount,
+      updated_at: syncTimestamp
     }));
 
     if (txRows.length > 0) {
@@ -81,7 +85,8 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
         month: payload.month,
         opening_balance: payload.openingBalance,
         source_file_id: payload.fileId,
-        source_file_name: payload.fileName
+        source_file_name: payload.fileName,
+        updated_at: syncTimestamp
       },
       {
         onConflict: 'year,month'

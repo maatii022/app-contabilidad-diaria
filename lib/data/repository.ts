@@ -7,7 +7,7 @@ import { syncPeriodFromGoogleSheets } from '@/lib/sync/google-sheets';
 import { buildDashboardData } from '@/lib/utils/finance';
 import { getCurrentPeriod, isCurrentPeriod, type Period } from '@/lib/utils/period';
 
-const AUTO_SYNC_INTERVAL_MINUTES = 10;
+const AUTO_SYNC_INTERVAL_MINUTES = 60;
 
 type TransactionRow = {
   id: string;
