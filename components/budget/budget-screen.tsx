@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { Check, PencilLine } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -42,9 +42,15 @@ export function BudgetScreen({
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [localBudgets, setLocalBudgets] = useState<Record<string, number>>(() =>
-    Object.fromEntries(budgets.map((budget) => [makeKey(budget.type, budget.categoryName), budget.plannedAmount]))
-  );
+  const [localBudgets, setLocalBudgets] = useState<Record<string, number>>(() => mapBudgetsToLocalState(budgets));
+
+  useEffect(() => {
+    setLocalBudgets(mapBudgetsToLocalState(budgets));
+    setSavingKey(null);
+    setSavedKey(null);
+    setEditingKey(null);
+    setErrorMessage(null);
+  }, [budgets, period.year, period.month]);
 
   const expenseActualMap = useMemo(
     () => new Map(data.expenseCategories.map((category) => [category.categoryName, category.amount])),
@@ -375,11 +381,8 @@ function makeKey(type: TransactionType, categoryName: string) {
   return `${type}:${categoryName}`;
 }
 
-function formatCompactAmount(value: number) {
-  return new Intl.NumberFormat('es-ES', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(value);
+function mapBudgetsToLocalState(budgets: MonthlyBudget[]) {
+  return Object.fromEntries(budgets.map((budget) => [makeKey(budget.type, budget.categoryName), budget.plannedAmount]));
 }
 
 function parseBudgetInput(value: string) {

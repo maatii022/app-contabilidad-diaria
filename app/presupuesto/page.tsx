@@ -16,6 +16,7 @@ export default async function PresupuestoPage({
   return (
     <AppShell period={period}>
       <BudgetScreen
+        key={`${period.year}-${period.month}`}
         data={data}
         budgets={budgets}
         period={period}
