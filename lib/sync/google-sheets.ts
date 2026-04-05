@@ -49,7 +49,7 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       source_row: transaction.sourceRow,
       type: transaction.type,
       transaction_date: transaction.transactionDate,
-      amount: transaction.amount,
+      amount: parseImportedAmount(transaction.amount),
       description: transaction.description,
       category_name: transaction.categoryName,
       last_synced_at: syncTimestamp,
@@ -61,7 +61,7 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       month: payload.month,
       type: budget.type,
       category_name: budget.categoryName,
-      planned_amount: budget.plannedAmount,
+      planned_amount: parseImportedAmount(budget.plannedAmount),
       updated_at: syncTimestamp
     }));
 
@@ -89,7 +89,7 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       {
         year: payload.year,
         month: payload.month,
-        opening_balance: payload.openingBalance,
+        opening_balance: parseImportedAmount(payload.openingBalance),
         source_file_id: payload.fileId,
         source_file_name: payload.fileName,
         updated_at: syncTimestamp
@@ -208,13 +208,16 @@ async function fetchMonthPayload(period: Period): Promise<GoogleSheetsSyncPayloa
 
   return {
     ...payload,
+    openingBalance: parseImportedAmount(payload.openingBalance),
     transactions: payload.transactions.map((transaction) => ({
       ...transaction,
-      type: normalizeTransactionType(transaction.type)
+      type: normalizeTransactionType(transaction.type),
+      amount: parseImportedAmount(transaction.amount)
     })),
     budgets: payload.budgets.map((budget) => ({
       ...budget,
-      type: normalizeTransactionType(budget.type)
+      type: normalizeTransactionType(budget.type),
+      plannedAmount: parseImportedAmount(budget.plannedAmount)
     }))
   };
 }
@@ -238,6 +241,34 @@ function buildPeriodRange(start: Period, end: Period): Period[] {
   }
 
   return periods;
+}
+
+function parseImportedAmount(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  let raw = String(value ?? '').trim();
+
+  if (!raw) {
+    return 0;
+  }
+
+  raw = raw
+    .replace(/\s/g, '')
+    .replace(/€/g, '')
+    .replace(/\u00A0/g, '');
+
+  if (raw.includes(',') && raw.includes('.')) {
+    raw = raw.replace(/\./g, '').replace(',', '.');
+  } else if (raw.includes(',')) {
+    raw = raw.replace(',', '.');
+  } else if (raw.includes('.')) {
+    raw = raw.replace(/\./g, '');
+  }
+
+  const num = Number(raw);
+  return Number.isFinite(num) ? num : 0;
 }
 
 async function finishSyncRun(
