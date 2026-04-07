@@ -38,7 +38,6 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
 
   try {
     const payload = await fetchMonthPayload(period);
-
     const syncTimestamp = new Date().toISOString();
 
     const txRows = payload.transactions.map((transaction) => ({
@@ -75,13 +74,21 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       }
     }
 
-    if (budgetRows.length > 0) {
-      const { error } = await supabase.from('monthly_budgets').upsert(budgetRows, {
-        onConflict: 'year,month,type,category_name'
-      });
+    const { error: deleteBudgetsError } = await supabase
+      .from('monthly_budgets')
+      .delete()
+      .eq('year', payload.year)
+      .eq('month', payload.month);
 
-      if (error) {
-        throw error;
+    if (deleteBudgetsError) {
+      throw deleteBudgetsError;
+    }
+
+    if (budgetRows.length > 0) {
+      const { error: insertBudgetsError } = await supabase.from('monthly_budgets').insert(budgetRows);
+
+      if (insertBudgetsError) {
+        throw insertBudgetsError;
       }
     }
 

@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { expenseCategories, incomeCategories } from '@/lib/domain/categories';
 import { mockMonthlyBudgets, mockOpeningBalance, mockTransactions } from '@/lib/domain/mock-data';
 import type { DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
 import { getServerSupabase } from '@/lib/supabase/server';
@@ -67,8 +66,8 @@ export async function getBudgetPageData(period: Period = getCurrentPeriod()) {
     data,
     budgets,
     seededFromPrevious,
-    expenseCatalog: expenseCategories.map((category) => category.name),
-    incomeCatalog: incomeCategories.map((category) => category.name)
+    expenseCatalog: buildBudgetCatalog(budgets, 'expense'),
+    incomeCatalog: buildBudgetCatalog(budgets, 'income')
   };
 }
 
@@ -176,15 +175,28 @@ async function ensureBudgetSeededFromPrevious(period: Period): Promise<boolean> 
     return false;
   }
 
-  await writeBudgetValuesToGoogleSheets(period, previousBudgets.map((budget) => ({
-    type: budget.type,
-    categoryName: budget.categoryName,
-    plannedAmount: budget.plannedAmount
-  })));
+  await writeBudgetValuesToGoogleSheets(
+    period,
+    previousBudgets.map((budget) => ({
+      type: budget.type,
+      categoryName: budget.categoryName,
+      plannedAmount: budget.plannedAmount
+    }))
+  );
 
   const syncTimestamp = new Date().toISOString();
 
-  const { error } = await supabase.from('monthly_budgets').upsert(
+  const { error: deleteError } = await supabase
+    .from('monthly_budgets')
+    .delete()
+    .eq('year', period.year)
+    .eq('month', period.month);
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  const { error: insertError } = await supabase.from('monthly_budgets').insert(
     previousBudgets.map((budget) => ({
       year: period.year,
       month: period.month,
@@ -192,14 +204,11 @@ async function ensureBudgetSeededFromPrevious(period: Period): Promise<boolean> 
       category_name: budget.categoryName,
       planned_amount: budget.plannedAmount,
       updated_at: syncTimestamp
-    })),
-    {
-      onConflict: 'year,month,type,category_name'
-    }
+    }))
   );
 
-  if (error) {
-    throw error;
+  if (insertError) {
+    throw insertError;
   }
 
   return true;
@@ -274,6 +283,10 @@ function mapMonthlyBudgetRows(rows: MonthlyBudgetRow[]): MonthlyBudget[] {
     categoryName: row.category_name,
     plannedAmount: Number(row.planned_amount)
   }));
+}
+
+function buildBudgetCatalog(budgets: MonthlyBudget[], type: TransactionType) {
+  return [...new Set(budgets.filter((budget) => budget.type === type).map((budget) => budget.categoryName))];
 }
 
 function filterTransactionsByPeriod(transactions: Transaction[], period?: Period) {
