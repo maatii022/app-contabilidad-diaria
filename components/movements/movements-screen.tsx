@@ -113,7 +113,22 @@ export function MovementsScreen({
   const visibleTransactions = useMemo(() => {
     return contextTransactions
       .filter((transaction) => activeType === 'all' || transaction.type === activeType)
-      .sort((a, b) => (a.transactionDate < b.transactionDate ? 1 : a.transactionDate > b.transactionDate ? -1 : b.amount - a.amount));
+      .map((transaction, index) => ({ transaction, index }))
+      .sort((a, b) => {
+        if (a.transaction.transactionDate !== b.transaction.transactionDate) {
+          return a.transaction.transactionDate < b.transaction.transactionDate ? 1 : -1;
+        }
+
+        const aRow = a.transaction.sourceRow ?? -1;
+        const bRow = b.transaction.sourceRow ?? -1;
+
+        if (aRow !== bRow) {
+          return bRow - aRow;
+        }
+
+        return a.index - b.index;
+      })
+      .map(({ transaction }) => transaction);
   }, [contextTransactions, activeType]);
 
   const grouped = useMemo(() => groupTransactionsByDate(visibleTransactions), [visibleTransactions]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import type { TrendPoint } from '@/lib/domain/types';
@@ -21,13 +21,25 @@ const MIN_BAR_HEIGHT = 8;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setReady(true));
+    setSelectedDate(null);
+    setReady(false);
+
+    const frame = window.requestAnimationFrame(() => {
+      setReady(true);
+
+      const container = scrollRef.current;
+      if (!container) return;
+
+      container.scrollLeft = container.scrollWidth - container.clientWidth;
+    });
+
     return () => window.cancelAnimationFrame(frame);
-  }, [period.month, period.year]);
+  }, [period.month, period.year, trend.length]);
 
   const selectedPoint = useMemo(
     () => trend.find((point) => point.date === selectedDate) ?? null,
@@ -79,7 +91,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
           </p>
         </div>
 
-        <div className="scrollbar-none -mx-1 overflow-x-auto pb-1">
+        <div ref={scrollRef} className="scrollbar-none -mx-1 overflow-x-auto pb-1">
           <div className="relative px-1" style={{ width: `${chartWidth}px`, height: `${CHART_HEIGHT + 44}px` }}>
             <div className="pointer-events-none absolute inset-x-1 top-4" style={{ height: `${CHART_HEIGHT - 18}px` }}>
               {Array.from({ length: GRID_LINES }).map((_, index) => {
