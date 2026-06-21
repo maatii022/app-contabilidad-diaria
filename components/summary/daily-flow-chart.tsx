@@ -78,15 +78,15 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm text-white/58">
+      <div className="flex items-center justify-between text-sm text-text-muted">
         <span>Evolución del saldo</span>
-        <span>Desde {formatCurrency(openingBalance)}</span>
+        <span className="tnum">Desde {formatCurrency(openingBalance)}</span>
       </div>
 
-      <div className="rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.018))] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <div className="rounded-lg border border-border bg-surface-2 p-5">
         <div className="mb-4 flex items-start justify-between gap-4">
-          <p className="text-[15px] font-medium text-white/82">{headerLabel}</p>
-          <p className={`shrink-0 text-[15px] font-medium ${headerValue >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+          <p className="text-[15px] font-medium text-text">{headerLabel}</p>
+          <p className={`tnum shrink-0 text-[15px] font-medium ${headerValue >= 0 ? 'text-pos' : 'text-neg'}`}>
             {headerValue > 0 ? '+' : headerValue < 0 ? '-' : ''}{formatCurrency(Math.abs(headerValue))}
           </p>
         </div>
@@ -128,9 +128,9 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                     style={{ width: `${dayWidth}px` }}
                   >
                     <div
-                      className={`relative rounded-[22px] border transition-all duration-300 ease-out ${
+                      className={`relative rounded-md border transition-all duration-300 ease-out ${
                         isSelected
-                          ? 'border-white/14 bg-white/[0.035] shadow-[0_14px_36px_rgba(3,8,25,0.24),inset_0_0_0_1px_rgba(255,255,255,0.02)]'
+                          ? 'border-accent bg-accent-soft'
                           : 'border-transparent bg-transparent'
                       }`}
                       style={{ height: `${CHART_HEIGHT}px` }}
@@ -149,8 +149,8 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
 
                       {isSelected && groupHasData ? (
                         <div
-                          className={`absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-medium leading-none backdrop-blur-md ${
-                            point.net >= 0 ? 'bg-emerald-500/16 text-emerald-300' : 'bg-rose-500/16 text-rose-300'
+                          className={`tnum absolute left-1/2 z-10 -translate-x-1/2 rounded-full px-2.5 py-1 text-[11px] font-medium leading-none backdrop-blur-md ${
+                            point.net >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
                           }`}
                           style={{ top: `${getNetLabelTop(point, maxValue)}px` }}
                         >
@@ -161,7 +161,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
 
                       <div className="absolute inset-x-0 bottom-6 flex items-end justify-center gap-2">
                         <div
-                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(155,216,255,1),rgba(72,127,255,0.82))] shadow-[0_12px_28px_rgba(74,123,255,0.22)] transition-[width,transform,opacity] duration-500 ease-out ${
+                          className={`rounded-full bg-pos transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.income === 0 ? 'opacity-20' : ''}`}
                           style={{
@@ -172,7 +172,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                           }}
                         />
                         <div
-                          className={`rounded-[999px] bg-[linear-gradient(180deg,rgba(255,184,202,0.96),rgba(255,95,130,0.82))] shadow-[0_12px_28px_rgba(255,98,134,0.18)] transition-[width,transform,opacity] duration-500 ease-out ${
+                          className={`rounded-full bg-neg transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.expense === 0 ? 'opacity-20' : ''}`}
                           style={{
@@ -185,7 +185,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                       </div>
                     </div>
 
-                    <div className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${isSelected ? 'text-white' : 'text-white/58 group-hover:text-white/82'}`}>
+                    <div className={`mt-3 flex min-h-[34px] flex-col items-center justify-start text-center text-[11px] leading-4 transition-colors ${isSelected ? 'text-text' : 'text-text-muted group-hover:text-text'}`}>
                       <span>{dateParts.day}</span>
                       <span>{dateParts.month}</span>
                     </div>

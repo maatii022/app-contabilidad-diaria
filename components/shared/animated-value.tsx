@@ -77,5 +77,5 @@ export function AnimatedValue({
     return output;
   }, [currency, displayValue, kind, locale, positivePrefix, value]);
 
-  return <span className={className}>{formatted}</span>;
+  return <span className={`tnum ${className ?? ''}`}>{formatted}</span>;
 }
