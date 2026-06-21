@@ -138,8 +138,8 @@ export function MovementsScreen({
       <SurfaceCard className="p-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/64 backdrop-blur-xl">
-              <SlidersHorizontal size={14} className="text-white/46" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-xs text-text-muted">
+              <SlidersHorizontal size={14} className="text-text-faint" />
               {visibleTransactions.length} resultados
             </div>
 
@@ -147,7 +147,7 @@ export function MovementsScreen({
               <button
                 type="button"
                 onClick={() => setActiveDate('')}
-                className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100"
+                className="inline-flex items-center gap-2 rounded-full border border-accent bg-accent px-3 py-2 text-xs text-white"
               >
                 {formatSectionLabel(activeDate)}
               </button>
@@ -155,12 +155,12 @@ export function MovementsScreen({
           </div>
 
           <div className="relative">
-            <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/34" />
+            <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-faint" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar por descripción o categoría"
-              className="w-full rounded-[22px] border border-white/10 bg-white/[0.04] py-3 pl-11 pr-4 text-sm text-white outline-none placeholder:text-white/28"
+              className="w-full rounded-md border border-border bg-surface-2 py-3 pl-11 pr-4 text-sm text-text outline-none transition placeholder:text-text-faint focus:border-accent"
             />
           </div>
 
@@ -193,7 +193,7 @@ export function MovementsScreen({
           </div>
 
           <div>
-            <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-white/34">Categoría</p>
+            <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-text-faint">Categoría</p>
             <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
               <FilterChip active={activeCategory === 'all'} onClick={() => setActiveCategory('all')}>
                 Todas
@@ -218,10 +218,10 @@ export function MovementsScreen({
             <SurfaceCard key={group.date} className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-base font-medium text-white">{formatSectionLabel(group.date)}</p>
-                  <p className="mt-1 text-xs text-white/42">{group.transactions.length} movimientos</p>
+                  <p className="text-base font-medium text-text">{formatSectionLabel(group.date)}</p>
+                  <p className="mt-1 text-xs text-text-faint">{group.transactions.length} movimientos</p>
                 </div>
-                <p className={`text-sm font-medium ${group.net >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                <p className={`tnum text-sm font-medium ${group.net >= 0 ? 'text-pos' : 'text-neg'}`}>
                   {group.net > 0 ? '+' : ''}
                   {formatCurrency(group.net)}
                 </p>
@@ -246,7 +246,7 @@ export function MovementsScreen({
           ))
         ) : (
           <SurfaceCard className="p-8">
-            <div className="rounded-[24px] border border-dashed border-white/10 p-6 text-center text-sm text-white/46">
+            <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-text-faint">
               No hay movimientos con los filtros actuales.
             </div>
           </SurfaceCard>
@@ -255,12 +255,12 @@ export function MovementsScreen({
 
       {deleteCandidate ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[420px] rounded-[28px] border border-white/10 bg-[#121a31]/95 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
-            <h3 className="text-lg font-medium text-white">Eliminar movimiento</h3>
-            <p className="mt-2 text-sm leading-6 text-white/62">
-              Vas a eliminar <span className="text-white">{deleteCandidate.description}</span> de Google Sheets y de la app. Esta acción no se puede deshacer.
+          <div className="w-full max-w-[420px] rounded-lg border border-border bg-surface-1 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
+            <h3 className="text-lg font-medium text-text">Eliminar movimiento</h3>
+            <p className="mt-2 text-sm leading-6 text-text-muted">
+              Vas a eliminar <span className="text-text">{deleteCandidate.description}</span> de Google Sheets y de la app. Esta acción no se puede deshacer.
             </p>
-            {deleteError ? <p className="mt-3 text-sm text-rose-300">{deleteError}</p> : null}
+            {deleteError ? <p className="mt-3 text-sm text-neg">{deleteError}</p> : null}
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -269,7 +269,7 @@ export function MovementsScreen({
                   setDeleteCandidate(null);
                   setDeleteError(null);
                 }}
-                className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/72 disabled:opacity-50"
+                className="rounded-md border border-border bg-surface-2 px-4 py-3 text-sm text-text-muted disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -313,7 +313,7 @@ export function MovementsScreen({
                     setIsDeleting(false);
                   }
                 }}
-                className="rounded-[20px] bg-rose-500/90 px-4 py-3 text-sm font-medium text-white disabled:opacity-60"
+                className="rounded-md bg-neg px-4 py-3 text-sm font-medium text-white disabled:opacity-60"
               >
                 {isDeleting ? 'Eliminando…' : 'Eliminar'}
               </button>
@@ -346,15 +346,15 @@ function TypeStatButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[22px] border px-3 py-3 text-left transition ${
+      className={`rounded-md border px-3 py-3 text-left transition ${
         active
-          ? 'border-white/16 bg-white/[0.08] shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_14px_34px_rgba(0,0,0,0.18)]'
-          : 'border-white/8 bg-white/[0.03]'
+          ? 'border-accent bg-surface-2'
+          : 'border-border bg-surface-2'
       } ${muted ? 'opacity-45' : 'opacity-100'}`}
       aria-pressed={active}
     >
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
-      <p className={`mt-2 text-sm font-medium ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
+      <p className="text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
+      <p className={`tnum mt-2 text-sm font-medium ${tone === 'income' ? 'text-pos' : 'text-neg'}`}>
         {signed && value > 0 ? '+' : ''}
         {formatCurrency(value)}
       </p>
@@ -396,9 +396,9 @@ function SwipeRow({
   const ACTION_WIDTH = 88;
 
   return (
-    <div className="relative overflow-hidden rounded-[22px]">
+    <div className="relative overflow-hidden rounded-md">
       <div
-        className={`pointer-events-none absolute inset-y-0 right-0 flex w-[88px] items-center justify-center rounded-[22px] bg-rose-500/95 shadow-[0_18px_40px_rgba(225,29,72,0.26)] transition-opacity duration-200 ${
+        className={`pointer-events-none absolute inset-y-0 right-0 flex w-[88px] items-center justify-center rounded-md bg-neg transition-opacity duration-200 ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
       >
@@ -415,7 +415,7 @@ function SwipeRow({
       </div>
 
       <div
-        className={`relative flex items-center justify-between rounded-[22px] border border-white/[0.06] bg-[#151e37]/88 px-4 py-3.5 transition-transform duration-200 ease-out ${
+        className={`relative flex items-center justify-between rounded-md border border-border bg-surface-2 px-4 py-3.5 transition-transform duration-200 ease-out ${
           isOpen ? '-translate-x-[88px]' : 'translate-x-0'
         }`}
         onTouchStart={(event) => {
@@ -440,20 +440,20 @@ function SwipeRow({
           <div className="flex items-center gap-3">
             <span
               className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                transaction.type === 'income' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'
+                transaction.type === 'income' ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
               }`}
             >
               {transaction.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
             </span>
             <div className="min-w-0 text-left">
-              <p className="truncate text-sm font-medium text-white">{transaction.description}</p>
-              <p className="mt-1 text-xs text-white/44">{transaction.categoryName}</p>
+              <p className="truncate text-sm font-medium text-text">{transaction.description}</p>
+              <p className="mt-1 text-xs text-text-faint">{transaction.categoryName}</p>
             </div>
           </div>
         </div>
         <p
-          className={`shrink-0 text-sm font-medium transition-all duration-200 ${
-            transaction.type === 'income' ? 'text-emerald-300' : 'text-rose-300'
+          className={`tnum shrink-0 text-sm font-medium transition-all duration-200 ${
+            transaction.type === 'income' ? 'text-pos' : 'text-neg'
           } ${isOpen ? 'translate-x-2 opacity-0' : 'translate-x-0 opacity-100'}`}
           style={{ maxWidth: isOpen ? `calc(100% - ${ACTION_WIDTH}px)` : undefined }}
         >
