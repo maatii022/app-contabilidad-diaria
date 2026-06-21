@@ -40,12 +40,12 @@ export function AnalyticsScreen({
           <div className="space-y-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-white/58">
+                <p className="text-sm text-text-muted">
                   {period.year}, acumulado hasta {annualData.months.at(-1)?.label ?? ''}
                 </p>
                 <h1
                   className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${
-                    annualData.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'
+                    annualData.netAmount >= 0 ? 'text-pos' : 'text-neg'
                   }`}
                 >
                   <AnimatedValue value={annualData.netAmount} kind="currency" positivePrefix className="tabular-nums" />
@@ -53,7 +53,7 @@ export function AnalyticsScreen({
               </div>
               <div
                 className={`rounded-full px-3 py-1 text-xs ${
-                  annualData.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
+                  annualData.netAmount >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
                 }`}
               >
                 {annualData.netAmount >= 0 ? 'año positivo' : 'año negativo'}
@@ -111,17 +111,17 @@ export function AnalyticsScreen({
           <div className="grid grid-cols-2 gap-5">
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-medium text-white">gastos altos</h3>
-                <span className="text-xs text-white/45">top 4</span>
+                <h3 className="text-base font-medium text-text">gastos altos</h3>
+                <span className="text-xs text-text-faint">top 4</span>
               </div>
-              <MovementList items={annualData.topExpenseTransactions} emptyText="Sin gastos relevantes este año." amountClass="text-rose-300" />
+              <MovementList items={annualData.topExpenseTransactions} emptyText="Sin gastos relevantes este año." amountClass="text-neg" />
             </div>
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-medium text-white">ingresos altos</h3>
-                <span className="text-xs text-white/45">top 4</span>
+                <h3 className="text-base font-medium text-text">ingresos altos</h3>
+                <span className="text-xs text-text-faint">top 4</span>
               </div>
-              <MovementList items={annualData.topIncomeTransactions} emptyText="Sin ingresos relevantes este año." amountClass="text-emerald-300" />
+              <MovementList items={annualData.topIncomeTransactions} emptyText="Sin ingresos relevantes este año." amountClass="text-pos" />
             </div>
           </div>
         </SurfaceCard>
@@ -145,10 +145,10 @@ export function AnalyticsScreen({
         <div className="space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm capitalize text-white/58">{data.summary.monthLabel.toLowerCase()}</p>
+              <p className="text-sm capitalize text-text-muted">{data.summary.monthLabel.toLowerCase()}</p>
               <h1
                 className={`mt-2 text-[2.5rem] font-semibold leading-none tracking-tight ${
-                  data.summary.netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'
+                  data.summary.netAmount >= 0 ? 'text-pos' : 'text-neg'
                 }`}
               >
                 <AnimatedValue value={data.summary.netAmount} kind="currency" positivePrefix className="tabular-nums" />
@@ -156,7 +156,7 @@ export function AnalyticsScreen({
             </div>
             <div
               className={`rounded-full px-3 py-1 text-xs ${
-                data.summary.netAmount >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
+                data.summary.netAmount >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
               }`}
             >
               {monthStatus}
@@ -225,17 +225,17 @@ export function AnalyticsScreen({
         <div className="grid grid-cols-2 gap-5">
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-medium text-white">gastos altos</h3>
-              <span className="text-xs text-white/45">top 4</span>
+              <h3 className="text-base font-medium text-text">gastos altos</h3>
+              <span className="text-xs text-text-faint">top 4</span>
             </div>
-            <MovementList items={strongestExpenseMovements} emptyText="Sin gastos relevantes este mes." amountClass="text-rose-300" />
+            <MovementList items={strongestExpenseMovements} emptyText="Sin gastos relevantes este mes." amountClass="text-neg" />
           </div>
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-medium text-white">ingresos altos</h3>
-              <span className="text-xs text-white/45">top 4</span>
+              <h3 className="text-base font-medium text-text">ingresos altos</h3>
+              <span className="text-xs text-text-faint">top 4</span>
             </div>
-            <MovementList items={strongestIncomeMovements} emptyText="Sin ingresos relevantes este mes." amountClass="text-emerald-300" />
+            <MovementList items={strongestIncomeMovements} emptyText="Sin ingresos relevantes este mes." amountClass="text-pos" />
           </div>
         </div>
       </SurfaceCard>
@@ -243,8 +243,8 @@ export function AnalyticsScreen({
       <SurfaceCard className="p-5">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-white/55">pulso diario</p>
-            <p className="mt-1 text-xs text-white/38">toque simple para leer el día, segundo toque para abrir movimientos</p>
+            <p className="text-sm text-text-muted">pulso diario</p>
+            <p className="mt-1 text-xs text-text-faint">toque simple para leer el día, segundo toque para abrir movimientos</p>
           </div>
         </div>
 
@@ -264,19 +264,19 @@ function ModeSwitch({
   active: 'monthly' | 'annual';
 }) {
   return (
-    <div className="inline-flex rounded-[20px] border border-white/10 bg-white/[0.04] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+    <div className="inline-flex rounded-md border border-border bg-surface-2 p-1.5">
       <Link
         href={monthlyHref}
-        className={`rounded-[14px] px-4 py-2 text-sm transition ${
-          active === 'monthly' ? 'bg-white/[0.08] text-white' : 'text-white/52 hover:text-white/76'
+        className={`rounded-sm px-4 py-2 text-sm transition ${
+          active === 'monthly' ? 'bg-accent text-white' : 'text-text-muted hover:text-text'
         }`}
       >
         mensual
       </Link>
       <Link
         href={annualHref}
-        className={`rounded-[14px] px-4 py-2 text-sm transition ${
-          active === 'annual' ? 'bg-white/[0.08] text-white' : 'text-white/52 hover:text-white/76'
+        className={`rounded-sm px-4 py-2 text-sm transition ${
+          active === 'annual' ? 'bg-accent text-white' : 'text-text-muted hover:text-text'
         }`}
       >
         anual
@@ -305,14 +305,14 @@ function DeltaChip({
   const positive = forcePositive ?? (positiveDirection === 'up' ? (delta ?? 0) >= 0 : (delta ?? 0) <= 0);
 
   return (
-    <div className="rounded-3xl border border-white/8 bg-white/[0.03] p-3">
-      <div className={`inline-flex rounded-full p-2 ${positive ? 'bg-emerald-500/12 text-emerald-300' : 'bg-rose-500/12 text-rose-300'}`}>{icon}</div>
-      <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-white/38">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">
+    <div className="rounded-md border border-border bg-surface-2 p-3">
+      <div className={`inline-flex rounded-full p-2 ${positive ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'}`}>{icon}</div>
+      <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
+      <p className="mt-1 text-sm font-medium text-text">
         <AnimatedValue value={value} kind={kind} positivePrefix={false} className="tabular-nums" />
       </p>
       {typeof delta === 'number' ? (
-        <p className={`mt-2 text-xs ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>
+        <p className={`tnum mt-2 text-xs ${positive ? 'text-pos' : 'text-neg'}`}>
           <AnimatedValue value={delta} kind="currency" positivePrefix className="tabular-nums" />
         </p>
       ) : null}
@@ -323,9 +323,9 @@ function DeltaChip({
 function InsightCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <SurfaceCard className="p-4">
-      <p className="text-sm text-white/55">{label}</p>
-      <p className="mt-3 text-xl font-semibold text-white">{value}</p>
-      <p className="mt-2 text-xs leading-5 text-white/48">{detail}</p>
+      <p className="text-sm text-text-muted">{label}</p>
+      <p className="mt-3 text-xl font-semibold text-text">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-text-faint">{detail}</p>
     </SurfaceCard>
   );
 }
@@ -345,18 +345,14 @@ function CategoryListCard({
   tone: 'expense' | 'income';
   emptyText: string;
 }) {
-  const gradient =
-    tone === 'expense'
-      ? 'bg-[linear-gradient(90deg,rgba(255,168,188,0.96),rgba(255,97,132,0.84))]'
-      : 'bg-[linear-gradient(90deg,rgba(150,223,255,0.95),rgba(72,126,255,0.82))]';
-  const amountClass = tone === 'expense' ? 'text-white' : 'text-emerald-300';
+  const amountClass = tone === 'expense' ? 'text-text' : 'text-pos';
   const percentageLabel = tone === 'expense' ? 'del gasto' : 'del ingreso';
 
   return (
     <SurfaceCard className="p-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-medium text-white">{title}</h3>
-        <span className="text-xs text-white/45">{subtitle}</span>
+        <h3 className="text-base font-medium text-text">{title}</h3>
+        <span className="text-xs text-text-faint">{subtitle}</span>
       </div>
 
       <div className="mt-5 space-y-4">
@@ -365,16 +361,16 @@ function CategoryListCard({
             <div key={category.categoryName} className="space-y-2">
               <div className="flex items-center justify-between gap-4 text-sm">
                 <div className="min-w-0">
-                  <p className="truncate text-white/82">{category.categoryName}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/36">
+                  <p className="truncate text-text">{category.categoryName}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-text-faint">
                     {formatPercent(category.percentage)} {percentageLabel}
                   </p>
                 </div>
-                <span className={`shrink-0 ${amountClass}`}>{formatCurrency(category.amount)}</span>
+                <span className={`tnum shrink-0 ${amountClass}`}>{formatCurrency(category.amount)}</span>
               </div>
               <div className="h-2 rounded-full bg-white/[0.06]">
                 <div
-                  className={`h-2 rounded-full ${gradient}`}
+                  className="h-2 rounded-full bg-white/25"
                   style={{ width: `${Math.max(8, (category.amount / maxAmount) * 100)}%` }}
                 />
               </div>
@@ -406,16 +402,16 @@ function MovementList({
       {items.map((transaction) => (
         <div
           key={transaction.id}
-          className="flex min-h-[136px] flex-col justify-between rounded-[24px] bg-white/[0.03] px-4 py-4"
+          className="flex min-h-[136px] flex-col justify-between rounded-md bg-surface-2 px-4 py-4"
         >
           <div className="min-w-0">
-            <p className="text-[1.05rem] font-medium leading-6 text-white break-words">
+            <p className="text-[1.05rem] font-medium leading-6 text-text break-words">
               {transaction.description}
             </p>
           </div>
 
           <div className="mt-4 space-y-2">
-            <p className="text-sm leading-6 text-white/48 break-words">
+            <p className="text-sm leading-6 text-text-faint break-words">
               {transaction.categoryName} · {formatShortDate(transaction.transactionDate)}
             </p>
 
@@ -434,7 +430,7 @@ function MovementList({
 
 function EmptyCardText({ text }: { text: string }) {
   return (
-    <div className="rounded-3xl border border-dashed border-white/10 px-4 py-5 text-sm text-white/42">
+    <div className="rounded-md border border-dashed border-border px-4 py-5 text-sm text-text-faint">
       {text}
     </div>
   );

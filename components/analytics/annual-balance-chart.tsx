@@ -46,19 +46,19 @@ export function AnnualBalanceChart({ months }: { months: AnnualBalancePoint[] })
     <SurfaceCard className="p-5">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-white/55">evolución anual del saldo</p>
-          <p className="mt-1 text-xs text-white/38">saldo de cierre por mes</p>
+          <p className="text-sm text-text-muted">evolución anual del saldo</p>
+          <p className="mt-1 text-xs text-text-faint">saldo de cierre por mes</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-white/40">{selected?.label ?? ''}</p>
-          <p className={`mt-1 text-lg font-medium ${selected && selected.closingBalance >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+          <p className="text-xs text-text-faint">{selected?.label ?? ''}</p>
+          <p className={`tnum mt-1 text-lg font-medium ${selected && selected.closingBalance >= 0 ? 'text-pos' : 'text-neg'}`}>
             <AnimatedValue value={selected?.closingBalance ?? 0} kind="currency" positivePrefix className="tabular-nums" />
           </p>
         </div>
       </div>
 
       {chart ? (
-        <div className="rounded-[28px] border border-white/6 bg-white/[0.02] px-4 py-4">
+        <div className="rounded-lg border border-border bg-surface-2 px-4 py-4">
           <div className="relative h-[190px]">
             <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="h-[190px] w-full overflow-visible">
               {[0.25, 0.5, 0.75].map((ratio) => {
@@ -77,27 +77,27 @@ export function AnnualBalanceChart({ months }: { months: AnnualBalancePoint[] })
                 );
               })}
 
-              <path d={chart.path} fill="none" stroke="rgba(132,197,255,0.92)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={chart.path} fill="none" stroke="var(--color-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
               {chart.points.map((point, index) => {
                 const active = index === selectedIndex;
                 return (
                   <g key={point.month} onClick={() => setSelectedIndex(index)} className="cursor-pointer">
-                    <circle cx={point.x} cy={point.y} r={active ? 8 : 5.5} fill={active ? 'rgba(114,201,255,1)' : 'rgba(198,233,255,0.95)'} />
-                    {active ? <circle cx={point.x} cy={point.y} r={14} fill="rgba(82,164,255,0.18)" /> : null}
+                    <circle cx={point.x} cy={point.y} r={active ? 8 : 5.5} fill={active ? 'var(--color-accent)' : 'rgba(255,255,255,0.45)'} />
+                    {active ? <circle cx={point.x} cy={point.y} r={14} fill="var(--color-accent-soft)" /> : null}
                   </g>
                 );
               })}
             </svg>
           </div>
 
-          <div className="mt-2 flex items-center justify-between gap-2 px-1 text-[11px] text-white/42">
+          <div className="mt-2 flex items-center justify-between gap-2 px-1 text-[11px] text-text-faint">
             {months.map((month, index) => (
               <button
                 key={month.month}
                 type="button"
                 onClick={() => setSelectedIndex(index)}
-                className={`min-w-0 flex-1 rounded-full px-1 py-1 transition ${index === selectedIndex ? 'text-white' : 'hover:text-white/72'}`}
+                className={`min-w-0 flex-1 rounded-full px-1 py-1 transition ${index === selectedIndex ? 'text-text' : 'hover:text-text'}`}
               >
                 {month.label}
               </button>
@@ -105,7 +105,7 @@ export function AnnualBalanceChart({ months }: { months: AnnualBalancePoint[] })
           </div>
         </div>
       ) : (
-        <div className="rounded-3xl border border-dashed border-white/10 px-4 py-8 text-sm text-white/42">
+        <div className="rounded-md border border-dashed border-border px-4 py-8 text-sm text-text-faint">
           Todavía no hay meses suficientes para dibujar la evolución anual.
         </div>
       )}

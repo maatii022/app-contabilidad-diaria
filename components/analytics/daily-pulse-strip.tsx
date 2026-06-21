@@ -32,8 +32,8 @@ export function DailyPulseStrip({ period, trend }: { period: Period; trend: Tren
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3 text-sm">
-        <h3 className="text-lg font-semibold text-white">pulso diario</h3>
-        <p className="text-white/45">impacto neto por día</p>
+        <h3 className="text-lg font-semibold text-text">pulso diario</h3>
+        <p className="text-text-faint">impacto neto por día</p>
       </div>
 
       <div className="space-y-1.5">
@@ -49,28 +49,26 @@ export function DailyPulseStrip({ period, trend }: { period: Period; trend: Tren
               key={point.date}
               type="button"
               onClick={() => handleSelect(point)}
-              className={`group flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition-all duration-200 ${
-                active ? 'bg-white/[0.04]' : 'hover:bg-white/[0.025]'
+              className={`group flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-all duration-200 ${
+                active ? 'bg-accent-soft' : 'hover:bg-surface-2'
               }`}
               aria-label={active ? `Abrir movimientos del ${label}` : `Seleccionar ${label}`}
             >
-              <span className="w-[56px] shrink-0 text-[15px] text-white/68">{formatPulseDayShort(point.date)}</span>
+              <span className="w-[56px] shrink-0 text-[15px] text-text-muted">{formatPulseDayShort(point.date)}</span>
 
               <div className="relative flex-1">
                 <div className="h-3.5 rounded-full bg-white/[0.06]" />
                 <div
                   className={`absolute left-0 top-0 h-3.5 rounded-full transition-all duration-300 ${
-                    tone === 'income'
-                      ? 'bg-[linear-gradient(90deg,rgba(44,207,181,0.95),rgba(72,220,203,0.92))] shadow-[0_0_18px_rgba(44,207,181,0.18)]'
-                      : 'bg-[linear-gradient(90deg,rgba(255,121,146,0.95),rgba(255,164,73,0.82))] shadow-[0_0_18px_rgba(255,121,146,0.18)]'
+                    tone === 'income' ? 'bg-pos' : 'bg-neg'
                   } ${active ? 'brightness-110' : ''}`}
                   style={{ width: `${width}%` }}
                 />
               </div>
 
-              <div className={`flex min-w-[108px] items-center justify-end gap-2 ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}>
+              <div className={`flex min-w-[108px] items-center justify-end gap-2 ${tone === 'income' ? 'text-pos' : 'text-neg'}`}>
                 {tone === 'income' ? <ArrowUp size={16} strokeWidth={2.2} /> : <ArrowDown size={16} strokeWidth={2.2} />}
-                <span className="text-[15px] font-medium">{amountText}</span>
+                <span className="tnum text-[15px] font-medium">{amountText}</span>
                 <ArrowRight size={14} className={`transition-opacity ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'}`} />
               </div>
             </button>
