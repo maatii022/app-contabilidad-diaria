@@ -161,7 +161,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
 
                       <div className="absolute inset-x-0 bottom-6 flex items-end justify-center gap-2">
                         <div
-                          className={`rounded-full bg-pos transition-[width,transform,opacity] duration-500 ease-out ${
+                          className={`bar-pos-v rounded-full transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.income === 0 ? 'opacity-20' : ''}`}
                           style={{
@@ -172,7 +172,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
                           }}
                         />
                         <div
-                          className={`rounded-full bg-neg transition-[width,transform,opacity] duration-500 ease-out ${
+                          className={`bar-neg-v rounded-full transition-[width,transform,opacity] duration-500 ease-out ${
                             isSelected ? 'w-[18px]' : 'w-[14px]'
                           } ${point.expense === 0 ? 'opacity-20' : ''}`}
                           style={{

@@ -60,7 +60,7 @@ export function DailyPulseStrip({ period, trend }: { period: Period; trend: Tren
                 <div className="h-3.5 rounded-full bg-white/[0.06]" />
                 <div
                   className={`absolute left-0 top-0 h-3.5 rounded-full transition-all duration-300 ${
-                    tone === 'income' ? 'bg-pos' : 'bg-neg'
+                    tone === 'income' ? 'bar-pos' : 'bar-neg'
                   } ${active ? 'brightness-110' : ''}`}
                   style={{ width: `${width}%` }}
                 />

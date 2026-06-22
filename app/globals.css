@@ -116,6 +116,27 @@ button {
   color: #fff;
 }
 
+/* Barras de datos: un solo degradado + brillo por significado */
+.bar-pos {
+  background: linear-gradient(90deg, rgba(62, 207, 142, 0.55), var(--color-pos));
+  box-shadow: 0 0 14px rgba(62, 207, 142, 0.28);
+}
+
+.bar-neg {
+  background: linear-gradient(90deg, rgba(242, 114, 140, 0.55), var(--color-neg));
+  box-shadow: 0 0 14px rgba(242, 114, 140, 0.28);
+}
+
+.bar-pos-v {
+  background: linear-gradient(180deg, var(--color-pos), rgba(62, 207, 142, 0.6));
+  box-shadow: 0 0 14px rgba(62, 207, 142, 0.25);
+}
+
+.bar-neg-v {
+  background: linear-gradient(180deg, var(--color-neg), rgba(242, 114, 140, 0.6));
+  box-shadow: 0 0 14px rgba(242, 114, 140, 0.25);
+}
+
 .scrollbar-none {
   scrollbar-width: none;
 }

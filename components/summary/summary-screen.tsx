@@ -81,7 +81,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
                 </div>
                 <div className="h-2 rounded-full bg-white/[0.06]">
                   <div
-                    className="h-2 rounded-full bg-white/25"
+                    className="bar-neg h-2 rounded-full"
                     style={{ width: `${(category.amount / maxExpenseCategory) * 100}%` }}
                   />
                 </div>

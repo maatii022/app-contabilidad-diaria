@@ -346,6 +346,7 @@ function CategoryListCard({
   emptyText: string;
 }) {
   const amountClass = tone === 'expense' ? 'text-text' : 'text-pos';
+  const barClass = tone === 'expense' ? 'bar-neg' : 'bar-pos';
   const percentageLabel = tone === 'expense' ? 'del gasto' : 'del ingreso';
 
   return (
@@ -370,7 +371,7 @@ function CategoryListCard({
               </div>
               <div className="h-2 rounded-full bg-white/[0.06]">
                 <div
-                  className="h-2 rounded-full bg-white/25"
+                  className={`h-2 rounded-full ${barClass}`}
                   style={{ width: `${Math.max(8, (category.amount / maxAmount) * 100)}%` }}
                 />
               </div>
