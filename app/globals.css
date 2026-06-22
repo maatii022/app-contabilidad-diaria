@@ -127,6 +127,11 @@ button {
   box-shadow: 0 0 14px rgba(242, 114, 140, 0.28);
 }
 
+.bar-accent {
+  background: linear-gradient(90deg, rgba(61, 99, 194, 0.55), var(--color-accent));
+  box-shadow: 0 0 14px rgba(61, 99, 194, 0.28);
+}
+
 .bar-pos-v {
   background: linear-gradient(180deg, var(--color-pos), rgba(62, 207, 142, 0.6));
   box-shadow: 0 0 14px rgba(62, 207, 142, 0.25);

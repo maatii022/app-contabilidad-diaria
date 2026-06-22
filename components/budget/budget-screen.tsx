@@ -126,23 +126,23 @@ export function BudgetScreen({
       <SurfaceCard className="overflow-hidden p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm text-white/54">presupuesto del mes</p>
+            <p className="text-sm text-text-muted">presupuesto del mes</p>
             <div className="mt-3 flex items-end gap-3">
               <AnimatedValue
                 value={expenseMargin}
                 kind="currency"
                 positivePrefix={expenseMargin > 0}
-                className={`text-[2.7rem] font-semibold leading-none tracking-tight ${expenseMargin >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}
+                className={`text-[2.7rem] font-semibold leading-none tracking-tight ${expenseMargin >= 0 ? 'text-pos' : 'text-neg'}`}
               />
             </div>
-            <p className="mt-3 text-sm text-white/48">
+            <p className="mt-3 text-sm text-text-faint">
               {expenseMargin >= 0 ? 'restante frente al gasto previsto' : 'exceso frente al gasto previsto'}
             </p>
           </div>
 
           <div
             className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
-              expenseMargin >= 0 ? 'bg-emerald-500/14 text-emerald-300' : 'bg-rose-500/14 text-rose-300'
+              expenseMargin >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
             }`}
           >
             {expenseMargin >= 0 ? 'dentro' : 'excedido'}
@@ -150,7 +150,7 @@ export function BudgetScreen({
         </div>
 
         {seededFromPrevious ? (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/14 bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-xs text-text-muted">
             <PencilLine size={13} />
             base copiada del mes anterior
           </div>
@@ -165,7 +165,7 @@ export function BudgetScreen({
       </SurfaceCard>
 
       {errorMessage ? (
-        <SurfaceCard className="border border-rose-500/16 bg-rose-500/[0.07] p-4 text-sm text-rose-100">
+        <SurfaceCard className="border border-neg bg-neg-soft p-4 text-sm text-neg">
           {errorMessage}
         </SurfaceCard>
       ) : null}
@@ -235,8 +235,8 @@ function BudgetSection({
   return (
     <SurfaceCard className="p-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[1.35rem] font-semibold capitalize tracking-tight text-white">{title}</h2>
-        <span className="text-xs text-white/44">{caption}</span>
+        <h2 className="text-[1.35rem] font-semibold capitalize tracking-tight text-text">{title}</h2>
+        <span className="text-xs text-text-faint">{caption}</span>
       </div>
 
       <div className="mt-4 space-y-3">
@@ -283,16 +283,16 @@ function BudgetRow({
   const barWidth = `${Math.min(100, Math.max(row.actualAmount > 0 ? 8 : 0, usageRatio * 100))}%`;
 
   return (
-    <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-4">
+    <div className="rounded-md border border-border bg-surface-2 p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium text-white">{row.categoryName}</p>
-            {isSaved ? <Check size={14} className="text-emerald-300" /> : null}
+            <p className="truncate text-sm font-medium text-text">{row.categoryName}</p>
+            {isSaved ? <Check size={14} className="text-pos" /> : null}
           </div>
-          <div className="mt-1 flex items-center gap-3 text-xs text-white/48">
-            <span>real {formatCurrency(row.actualAmount)}</span>
-            <span className={difference >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
+          <div className="mt-1 flex items-center gap-3 text-xs text-text-faint">
+            <span className="tnum">real {formatCurrency(row.actualAmount)}</span>
+            <span className={`tnum ${difference >= 0 ? 'text-pos' : 'text-neg'}`}>
               {difference >= 0 ? (row.type === 'expense' ? 'restan ' : 'por encima ') : row.type === 'expense' ? 'exceso ' : 'faltan '}
               {formatCurrency(Math.abs(difference))}
             </span>
@@ -301,7 +301,7 @@ function BudgetRow({
 
         <div className="flex shrink-0 items-center gap-2">
           {isEditing ? (
-            <div className="relative flex h-12 w-[104px] items-center justify-end rounded-[18px] border border-white/10 bg-[#151e35] px-3 text-right text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+            <div className="relative flex h-12 w-[104px] items-center justify-end rounded-sm border border-accent bg-surface-1 px-3 text-right text-sm text-text">
               <input
                 type="text"
                 inputMode="decimal"
@@ -314,9 +314,9 @@ function BudgetRow({
                     void onSave(row);
                   }
                 }}
-                className="w-full bg-transparent text-right text-[1.05rem] font-medium text-white outline-none"
+                className="tnum w-full bg-transparent text-right text-[1.05rem] font-medium text-text outline-none"
               />
-              <span className="pointer-events-none ml-2 text-[11px] text-white/36">€</span>
+              <span className="pointer-events-none ml-2 text-[11px] text-text-faint">€</span>
             </div>
           ) : null}
 
@@ -330,10 +330,10 @@ function BudgetRow({
               }
               onStartEdit(row.categoryName);
             }}
-            className={`inline-flex h-10 w-10 items-center justify-center rounded-[16px] border transition ${
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-sm border transition ${
               isSaved
-                ? 'border-emerald-400/18 bg-emerald-500/12 text-emerald-300'
-                : 'border-white/10 bg-white/[0.05] text-white/72 hover:bg-white/[0.08]'
+                ? 'border-pos bg-pos-soft text-pos'
+                : 'border-border bg-surface-1 text-text-muted hover:bg-surface-2'
             }`}
             aria-label={isEditing ? `Guardar presupuesto de ${row.categoryName}` : `Editar presupuesto de ${row.categoryName}`}
           >
@@ -351,11 +351,7 @@ function BudgetRow({
       <div className="mt-3 h-2 rounded-full bg-white/[0.06]">
         <div
           className={`h-2 rounded-full ${
-            row.type === 'expense'
-              ? isOver
-                ? 'bg-[linear-gradient(90deg,rgba(251,113,133,0.92),rgba(245,158,11,0.75))]'
-                : 'bg-[linear-gradient(90deg,rgba(96,165,250,0.95),rgba(52,211,153,0.78))]'
-              : 'bg-[linear-gradient(90deg,rgba(45,212,191,0.95),rgba(96,165,250,0.82))]'
+            row.type === 'expense' ? (isOver ? 'bar-neg' : 'bar-accent') : 'bar-pos'
           }`}
           style={{ width: barWidth }}
         />
@@ -366,12 +362,12 @@ function BudgetRow({
 
 function StatPill({ label, value, tone }: { label: string; value: number; tone: 'income' | 'expense' }) {
   return (
-    <div className="flex min-h-[118px] flex-col justify-between rounded-[22px] border border-white/8 bg-white/[0.03] p-4">
-      <p className="max-w-[8rem] text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
+    <div className="flex min-h-[118px] flex-col justify-between rounded-md border border-border bg-surface-2 p-4">
+      <p className="max-w-[8rem] text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <AnimatedValue
         value={value}
         kind="currency"
-        className={`mt-4 block text-[1.1rem] font-semibold ${tone === 'income' ? 'text-emerald-300' : 'text-rose-300'}`}
+        className={`mt-4 block text-[1.1rem] font-semibold ${tone === 'income' ? 'text-pos' : 'text-neg'}`}
       />
     </div>
   );
