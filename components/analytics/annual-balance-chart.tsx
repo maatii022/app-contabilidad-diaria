@@ -58,7 +58,7 @@ export function AnnualBalanceChart({ months }: { months: AnnualBalancePoint[] })
       </div>
 
       {chart ? (
-        <div className="rounded-lg border border-border bg-surface-2 px-4 py-4">
+        <div className="rounded-lg border border-white/[0.06] bg-black/20 px-4 py-4 shadow-[inset_0_2px_10px_rgba(0,0,0,0.35)]">
           <div className="relative h-[190px]">
             <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="h-[190px] w-full overflow-visible">
               {[0.25, 0.5, 0.75].map((ratio) => {

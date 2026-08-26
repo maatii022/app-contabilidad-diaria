@@ -52,8 +52,10 @@ export function AnalyticsScreen({
                 </h1>
               </div>
               <div
-                className={`rounded-full px-3 py-1 text-xs ${
-                  annualData.netAmount >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
+                className={`rounded-[14px] border px-3 py-1.5 text-xs font-medium ${
+                  annualData.netAmount >= 0
+                    ? 'border-[rgba(62,207,142,0.25)] bg-pos-soft text-pos shadow-[0_0_16px_rgba(62,207,142,0.12)]'
+                    : 'border-[rgba(242,114,140,0.25)] bg-neg-soft text-neg shadow-[0_0_16px_rgba(242,114,140,0.12)]'
                 }`}
               >
                 {annualData.netAmount >= 0 ? 'año positivo' : 'año negativo'}
@@ -155,8 +157,10 @@ export function AnalyticsScreen({
               </h1>
             </div>
             <div
-              className={`rounded-full px-3 py-1 text-xs ${
-                data.summary.netAmount >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
+              className={`rounded-[14px] border px-3 py-1.5 text-xs font-medium ${
+                data.summary.netAmount >= 0
+                  ? 'border-[rgba(62,207,142,0.25)] bg-pos-soft text-pos shadow-[0_0_16px_rgba(62,207,142,0.12)]'
+                  : 'border-[rgba(242,114,140,0.25)] bg-neg-soft text-neg shadow-[0_0_16px_rgba(242,114,140,0.12)]'
               }`}
             >
               {monthStatus}
@@ -264,19 +268,23 @@ function ModeSwitch({
   active: 'monthly' | 'annual';
 }) {
   return (
-    <div className="inline-flex rounded-md border border-border bg-surface-2 p-1.5">
+    <div className="inline-flex rounded-[16px] bg-surface-2 p-1.5 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.03)]">
       <Link
         href={monthlyHref}
-        className={`rounded-sm px-4 py-2 text-sm transition ${
-          active === 'monthly' ? 'bg-accent text-white' : 'text-text-muted hover:text-text'
+        className={`rounded-[12px] px-4 py-2 text-sm transition ${
+          active === 'monthly'
+            ? 'bg-accent text-white shadow-[0_3px_10px_rgba(61,99,194,0.35),inset_0_1px_0_rgba(255,255,255,0.22)]'
+            : 'text-text-muted hover:text-text'
         }`}
       >
         mensual
       </Link>
       <Link
         href={annualHref}
-        className={`rounded-sm px-4 py-2 text-sm transition ${
-          active === 'annual' ? 'bg-accent text-white' : 'text-text-muted hover:text-text'
+        className={`rounded-[12px] px-4 py-2 text-sm transition ${
+          active === 'annual'
+            ? 'bg-accent text-white shadow-[0_3px_10px_rgba(61,99,194,0.35),inset_0_1px_0_rgba(255,255,255,0.22)]'
+            : 'text-text-muted hover:text-text'
         }`}
       >
         anual
@@ -305,8 +313,16 @@ function DeltaChip({
   const positive = forcePositive ?? (positiveDirection === 'up' ? (delta ?? 0) >= 0 : (delta ?? 0) <= 0);
 
   return (
-    <div className="rounded-md border border-border bg-surface-2 p-3">
-      <div className={`inline-flex rounded-full p-2 ${positive ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'}`}>{icon}</div>
+    <div className="neu rounded-[18px] p-3">
+      <div
+        className={`inline-flex rounded-full p-2 ${
+          positive
+            ? 'bg-pos-soft text-pos shadow-[0_0_12px_rgba(62,207,142,0.18)]'
+            : 'bg-neg-soft text-neg shadow-[0_0_12px_rgba(242,114,140,0.18)]'
+        }`}
+      >
+        {icon}
+      </div>
       <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <p className="mt-1 text-sm font-medium text-text">
         <AnimatedValue value={value} kind={kind} positivePrefix={false} className="tabular-nums" />
@@ -369,9 +385,9 @@ function CategoryListCard({
                 </div>
                 <span className={`tnum shrink-0 ${amountClass}`}>{formatCurrency(category.amount)}</span>
               </div>
-              <div className="h-2 rounded-full bg-white/[0.06]">
+              <div className="bar-track h-2.5 rounded-full">
                 <div
-                  className={`h-2 rounded-full ${barClass}`}
+                  className={`h-2.5 rounded-full ${barClass}`}
                   style={{ width: `${Math.max(8, (category.amount / maxAmount) * 100)}%` }}
                 />
               </div>
@@ -403,7 +419,7 @@ function MovementList({
       {items.map((transaction) => (
         <div
           key={transaction.id}
-          className="flex min-h-[136px] flex-col justify-between rounded-md bg-surface-2 px-4 py-4"
+          className="neu flex min-h-[136px] flex-col justify-between rounded-[18px] border border-white/[0.06] px-4 py-4"
         >
           <div className="min-w-0">
             <p className="text-[1.05rem] font-medium leading-6 text-text break-words">

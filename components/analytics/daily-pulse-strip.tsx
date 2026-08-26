@@ -57,7 +57,7 @@ export function DailyPulseStrip({ period, trend }: { period: Period; trend: Tren
               <span className="w-[56px] shrink-0 text-[15px] text-text-muted">{formatPulseDayShort(point.date)}</span>
 
               <div className="relative flex-1">
-                <div className="h-3.5 rounded-full bg-white/[0.06]" />
+                <div className="bar-track h-3.5 rounded-full" />
                 <div
                   className={`absolute left-0 top-0 h-3.5 rounded-full transition-all duration-300 ${
                     tone === 'income' ? 'bar-pos' : 'bar-neg'
