@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
@@ -37,6 +37,9 @@ export function MonthlyBalanceChart({
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const activeIndex = selectedIndex ?? days.length - 1;
 
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const draggingRef = useRef(false);
+
   const chart = useMemo(() => {
     if (days.length === 0) {
       return null;
@@ -64,10 +67,30 @@ export function MonthlyBalanceChart({
     const line = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
     const area = `${line} L ${points[points.length - 1].x.toFixed(2)} ${height - paddingY} L ${points[0].x.toFixed(2)} ${height - paddingY} Z`;
 
-    return { width, height, points, line, area };
+    return { width, height, paddingX, paddingY, stepX, points, line, area };
   }, [days]);
 
   const selected = days[activeIndex] ?? null;
+  const activePoint = chart?.points[activeIndex] ?? null;
+
+  function updateFromClientX(clientX: number) {
+    const svg = svgRef.current;
+    if (!svg || !chart) {
+      return;
+    }
+
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0) {
+      return;
+    }
+
+    const ratio = (clientX - rect.left) / rect.width;
+    const xView = ratio * chart.width;
+    const rawIndex = chart.stepX === 0 ? 0 : Math.round((xView - chart.paddingX) / chart.stepX);
+    const index = Math.min(days.length - 1, Math.max(0, rawIndex));
+
+    setSelectedIndex((current) => (current === index ? current : index));
+  }
 
   const axisTicks = useMemo(() => {
     const total = days.length;
@@ -93,10 +116,30 @@ export function MonthlyBalanceChart({
         </div>
       </div>
 
-      {chart ? (
+      {chart && activePoint ? (
         <div className="rounded-lg border border-white/[0.06] bg-black/20 px-4 py-4 shadow-[inset_0_2px_10px_rgba(0,0,0,0.35)]">
           <div className="relative h-[190px]">
-            <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="h-[190px] w-full overflow-visible">
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${chart.width} ${chart.height}`}
+              className="h-[190px] w-full touch-pan-y select-none overflow-visible"
+              onPointerDown={(event) => {
+                draggingRef.current = true;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                updateFromClientX(event.clientX);
+              }}
+              onPointerMove={(event) => {
+                if (draggingRef.current) {
+                  updateFromClientX(event.clientX);
+                }
+              }}
+              onPointerUp={() => {
+                draggingRef.current = false;
+              }}
+              onPointerCancel={() => {
+                draggingRef.current = false;
+              }}
+            >
               <defs>
                 <linearGradient id="monthly-balance-area" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.28" />
@@ -123,31 +166,16 @@ export function MonthlyBalanceChart({
               <path d={chart.area} fill="url(#monthly-balance-area)" stroke="none" />
               <path d={chart.line} fill="none" stroke="var(--color-accent)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
-              {chart.points.map((point, index) => {
-                const active = index === activeIndex;
-                if (!active) {
-                  return null;
-                }
-                return (
-                  <g key={point.date}>
-                    <circle cx={point.x} cy={point.y} r={14} fill="var(--color-accent-soft)" />
-                    <circle cx={point.x} cy={point.y} r={7} fill="var(--color-accent)" />
-                  </g>
-                );
-              })}
-
-              {chart.points.map((point, index) => (
-                <rect
-                  key={`hit-${point.date}`}
-                  x={point.x - Math.max(6, (chart.width - 40) / days.length / 2)}
-                  y={0}
-                  width={Math.max(12, (chart.width - 40) / days.length)}
-                  height={chart.height}
-                  fill="transparent"
-                  className="cursor-pointer"
-                  onClick={() => setSelectedIndex(index)}
-                />
-              ))}
+              <line
+                x1={activePoint.x}
+                y1={6}
+                x2={activePoint.x}
+                y2={chart.height - 6}
+                stroke="rgba(255,255,255,0.28)"
+                strokeWidth="1.5"
+              />
+              <circle cx={activePoint.x} cy={activePoint.y} r={14} fill="var(--color-accent-soft)" />
+              <circle cx={activePoint.x} cy={activePoint.y} r={7} fill="var(--color-accent)" stroke="#fff" strokeWidth="1.5" />
             </svg>
           </div>
 
