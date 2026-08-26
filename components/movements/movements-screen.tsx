@@ -138,7 +138,7 @@ export function MovementsScreen({
       <SurfaceCard className="p-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-2 text-xs text-text-muted">
+            <div className="neu inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-text-muted">
               <SlidersHorizontal size={14} className="text-text-faint" />
               {visibleTransactions.length} resultados
             </div>
@@ -160,7 +160,7 @@ export function MovementsScreen({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar por descripción o categoría"
-              className="w-full rounded-md border border-border bg-surface-2 py-3 pl-11 pr-4 text-sm text-text outline-none transition placeholder:text-text-faint focus:border-accent"
+              className="w-full rounded-[16px] border border-white/[0.06] bg-black/25 py-3 pl-11 pr-4 text-sm text-text shadow-[inset_2px_2px_5px_rgba(0,0,0,0.5),inset_-1px_-1px_2px_rgba(255,255,255,0.04)] outline-none transition placeholder:text-text-faint focus:border-accent"
             />
           </div>
 
@@ -255,7 +255,7 @@ export function MovementsScreen({
 
       {deleteCandidate ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[420px] rounded-lg border border-border bg-surface-1 p-5 shadow-[0_25px_80px_rgba(0,0,0,0.45)]">
+          <div className="glass w-full max-w-[420px] p-5">
             <h3 className="text-lg font-medium text-text">Eliminar movimiento</h3>
             <p className="mt-2 text-sm leading-6 text-text-muted">
               Vas a eliminar <span className="text-text">{deleteCandidate.description}</span> de Google Sheets y de la app. Esta acción no se puede deshacer.
@@ -269,7 +269,7 @@ export function MovementsScreen({
                   setDeleteCandidate(null);
                   setDeleteError(null);
                 }}
-                className="rounded-md border border-border bg-surface-2 px-4 py-3 text-sm text-text-muted disabled:opacity-50"
+                className="neu rounded-[16px] px-4 py-3 text-sm text-text-muted disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -346,10 +346,8 @@ function TypeStatButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-md border px-3 py-3 text-left transition ${
-        active
-          ? 'border-accent bg-surface-2'
-          : 'border-border bg-surface-2'
+      className={`rounded-[18px] border px-3 py-3 text-left transition ${
+        active ? 'neu-pressed border-accent' : 'neu border-transparent'
       } ${muted ? 'opacity-45' : 'opacity-100'}`}
       aria-pressed={active}
     >
@@ -396,9 +394,9 @@ function SwipeRow({
   const ACTION_WIDTH = 88;
 
   return (
-    <div className="relative overflow-hidden rounded-md">
+    <div className="relative overflow-hidden rounded-[18px]">
       <div
-        className={`pointer-events-none absolute inset-y-0 right-0 flex w-[88px] items-center justify-center rounded-md bg-neg transition-opacity duration-200 ${
+        className={`pointer-events-none absolute inset-y-0 right-0 flex w-[88px] items-center justify-center rounded-[18px] bg-neg transition-opacity duration-200 ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
       >
@@ -415,7 +413,7 @@ function SwipeRow({
       </div>
 
       <div
-        className={`relative flex items-center justify-between rounded-md border border-border bg-surface-2 px-4 py-3.5 transition-transform duration-200 ease-out ${
+        className={`neu relative flex items-center justify-between rounded-[18px] px-4 py-3.5 transition-transform duration-200 ease-out ${
           isOpen ? '-translate-x-[88px]' : 'translate-x-0'
         }`}
         onTouchStart={(event) => {
@@ -440,7 +438,9 @@ function SwipeRow({
           <div className="flex items-center gap-3">
             <span
               className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                transaction.type === 'income' ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
+                transaction.type === 'income'
+                  ? 'bg-pos-soft text-pos shadow-[0_0_12px_rgba(62,207,142,0.2)]'
+                  : 'bg-neg-soft text-neg shadow-[0_0_12px_rgba(242,114,140,0.2)]'
               }`}
             >
               {transaction.type === 'income' ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}

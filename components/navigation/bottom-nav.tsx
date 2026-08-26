@@ -26,7 +26,10 @@ export function BottomNav() {
 
   return (
     <nav className="sticky bottom-4 z-20 mt-8">
-      <div className="glass relative mx-auto grid max-w-md grid-cols-4 overflow-hidden p-2" style={{ borderRadius: 26 }}>
+      <div
+        className="glass relative mx-auto grid max-w-md grid-cols-4 overflow-hidden p-2"
+        style={{ borderRadius: 26, background: 'rgba(16, 21, 35, 0.92)' }}
+      >
         {activeIndex >= 0 ? (
           <span
             aria-hidden
