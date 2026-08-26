@@ -413,7 +413,7 @@ function SwipeRow({
       </div>
 
       <div
-        className={`neu relative flex items-center justify-between rounded-[18px] px-4 py-3.5 transition-transform duration-200 ease-out ${
+        className={`neu relative flex items-center justify-between rounded-[18px] border border-white/[0.08] px-4 py-3.5 transition-transform duration-200 ease-out ${
           isOpen ? '-translate-x-[88px]' : 'translate-x-0'
         }`}
         onTouchStart={(event) => {
