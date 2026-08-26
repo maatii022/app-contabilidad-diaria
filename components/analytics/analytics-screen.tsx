@@ -4,6 +4,7 @@ import { ArrowUpRight, BanknoteArrowDown, CircleDollarSign } from 'lucide-react'
 
 import { AnnualBalanceChart } from '@/components/analytics/annual-balance-chart';
 import { DailyPulseStrip } from '@/components/analytics/daily-pulse-strip';
+import { MonthlyBalanceChart } from '@/components/analytics/monthly-balance-chart';
 import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { AnnualAnalyticsData, CategoryTotal, DashboardData, Transaction } from '@/lib/domain/types';
@@ -193,6 +194,8 @@ export function AnalyticsScreen({
           </div>
         </div>
       </SurfaceCard>
+
+      <MonthlyBalanceChart trend={data.trend} openingBalance={data.summary.openingBalance} period={period} />
 
       <div className="grid grid-cols-2 gap-3">
         <InsightCard
