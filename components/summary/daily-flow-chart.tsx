@@ -83,7 +83,7 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
         <span className="tnum">Desde {formatCurrency(openingBalance)}</span>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface-2 p-5">
+      <div className="rounded-lg border border-white/[0.06] bg-black/20 p-5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.35)]">
         <div className="mb-4 flex items-start justify-between gap-4">
           <p className="text-[15px] font-medium text-text">{headerLabel}</p>
           <p className={`tnum shrink-0 text-[15px] font-medium ${headerValue >= 0 ? 'text-pos' : 'text-neg'}`}>

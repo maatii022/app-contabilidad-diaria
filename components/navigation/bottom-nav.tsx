@@ -22,9 +22,26 @@ export function BottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const activeIndex = items.findIndex((item) => item.href === pathname);
+
   return (
     <nav className="sticky bottom-4 z-20 mt-8">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-[28px] border border-white/10 bg-black/45 p-2 shadow-[0_20px_50px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+      <div className="glass relative mx-auto grid max-w-md grid-cols-4 overflow-hidden p-2" style={{ borderRadius: 26 }}>
+        {activeIndex >= 0 ? (
+          <span
+            aria-hidden
+            className="nav-pill pointer-events-none absolute z-0"
+            style={{
+              top: 8,
+              bottom: 8,
+              left: 8,
+              width: 'calc((100% - 16px) / 4)',
+              borderRadius: 18,
+              transform: `translateX(${activeIndex * 100}%)`
+            }}
+          />
+        ) : null}
+
         {items.map((item) => {
           const active = pathname === item.href;
           const Icon = item.icon;
@@ -34,10 +51,8 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={href}
-              className={`flex flex-col items-center justify-center gap-1 rounded-[20px] px-2 py-3 text-[11px] transition ${
-                active
-                  ? 'bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]'
-                  : 'text-white/45 hover:bg-white/5 hover:text-white/75'
+              className={`relative z-10 flex flex-col items-center justify-center gap-1 rounded-[18px] px-2 py-3 text-[11px] transition-colors duration-200 ${
+                active ? 'text-white' : 'text-white/45 hover:text-white/75'
               }`}
             >
               <Icon size={18} strokeWidth={2} />

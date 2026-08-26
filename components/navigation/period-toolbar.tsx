@@ -23,7 +23,7 @@ export function PeriodToolbar({ period }: { period: Period }) {
       <div className="flex items-center justify-between gap-3">
         <ManualSyncButton period={period} />
 
-        <div className="inline-flex items-center gap-2 rounded-[22px] border border-white/10 bg-white/[0.04] px-2 py-2 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+        <div className="glass inline-flex items-center gap-2 px-2 py-2 text-white" style={{ borderRadius: 22 }}>
           {canGoPrev ? (
             <Link
               href={buildPeriodHref(pathname, searchParams, prev)}
@@ -84,7 +84,7 @@ function ManualSyncButton({ period }: { period: Period }) {
 
   const icon = useMemo(() => {
     if (status === 'success') {
-      return <Check size={16} className="text-emerald-300" />;
+      return <Check size={16} className="text-pos" />;
     }
 
     return <RefreshCw size={16} className={`${status === 'loading' ? 'animate-spin text-white' : 'text-white/78'}`} />;
@@ -120,17 +120,11 @@ function ManualSyncButton({ period }: { period: Period }) {
     <button
       type="button"
       onClick={handleSync}
-      className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[20px] border bg-white/[0.035] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl transition ${
-        status === 'success'
-          ? 'border-emerald-400/20 bg-emerald-500/[0.08]'
-          : status === 'error'
-            ? 'border-rose-400/20 bg-rose-500/[0.08]'
-            : 'border-white/10 hover:bg-white/[0.06]'
-      }`}
+      className="neu inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[18px] transition active:scale-95"
       aria-label="Sincronizar mes manualmente"
       title="Sincronizar mes manualmente"
     >
-      {status === 'error' ? <RefreshCw size={16} className="text-rose-300" /> : icon}
+      {status === 'error' ? <RefreshCw size={16} className="text-neg" /> : icon}
     </button>
   );
 }

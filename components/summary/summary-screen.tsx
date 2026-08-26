@@ -25,8 +25,10 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
               </h1>
             </div>
             <div
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                isPositive ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
+              className={`rounded-[14px] border px-3 py-1.5 text-xs font-medium ${
+                isPositive
+                  ? 'border-[rgba(62,207,142,0.25)] bg-pos-soft text-pos shadow-[0_0_16px_rgba(62,207,142,0.12)]'
+                  : 'border-[rgba(242,114,140,0.25)] bg-neg-soft text-neg shadow-[0_0_16px_rgba(242,114,140,0.12)]'
               }`}
             >
               {isPositive ? 'Mes positivo' : 'Mes negativo'}
@@ -79,9 +81,9 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
                   <span>{category.categoryName}</span>
                   <span className="tnum text-text">{formatCurrency(category.amount)}</span>
                 </div>
-                <div className="h-2 rounded-full bg-white/[0.06]">
+                <div className="bar-track h-2.5 rounded-full">
                   <div
-                    className="bar-neg h-2 rounded-full"
+                    className="bar-neg h-2.5 rounded-full"
                     style={{ width: `${(category.amount / maxExpenseCategory) * 100}%` }}
                   />
                 </div>
@@ -104,7 +106,7 @@ export function SummaryScreen({ data, period }: { data: DashboardData; period: P
         <div className="mt-4 space-y-3">
           {data.latestTransactions.length > 0 ? (
             data.latestTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between rounded-md bg-surface-2 px-3 py-3">
+              <div key={transaction.id} className="flex items-center justify-between rounded-md bg-white/[0.04] px-3 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">{transaction.description}</p>
                   <p className="mt-1 text-xs text-text-faint">
@@ -139,11 +141,14 @@ function MetricChip({
   tone: 'income' | 'expense';
 }) {
   const toneClasses = tone === 'income' ? 'text-pos' : 'text-neg';
-  const iconClasses = tone === 'income' ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg';
+  const iconClasses =
+    tone === 'income'
+      ? 'bg-pos-soft text-pos shadow-[0_0_12px_rgba(62,207,142,0.18)]'
+      : 'bg-neg-soft text-neg shadow-[0_0_12px_rgba(242,114,140,0.18)]';
 
   return (
-    <div className="rounded-md border border-border bg-surface-2 p-3">
-      <div className={`inline-flex rounded-full p-2 ${iconClasses}`}>{icon}</div>
+    <div className="neu rounded-[20px] p-3.5">
+      <div className={`inline-flex rounded-[12px] p-2 ${iconClasses}`}>{icon}</div>
       <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <div className={`tnum mt-1 text-sm font-medium ${toneClasses}`}>{value}</div>
     </div>

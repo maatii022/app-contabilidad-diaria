@@ -73,12 +73,52 @@ button {
   font-feature-settings: "tnum";
 }
 
-.surface-card {
+/* Fondo de la app: base oscura + glows sutiles para que el cristal refracte */
+.app-bg {
+  background:
+    radial-gradient(90% 55% at 88% 102%, rgba(62, 207, 142, 0.1), transparent 55%),
+    radial-gradient(120% 85% at 50% -5%, #17244e 0%, #0a0e17 52%);
+}
+
+/* Superficie de cristal (glassmorfismo): esmerilado oscuro, poco translúcido */
+.surface-card,
+.glass {
   position: relative;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface-1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(21, 27, 43, 0.82);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Relieve neumórfico para controles */
+.neu {
+  background: linear-gradient(145deg, #182036, #121828);
+  box-shadow: 5px 5px 12px rgba(0, 0, 0, 0.4), -4px -4px 10px rgba(255, 255, 255, 0.035),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.neu-pressed {
+  background: #131a29;
+  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.45), inset -4px -4px 8px rgba(255, 255, 255, 0.03);
+}
+
+/* Canal hundido para las barras de datos */
+.bar-track {
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.04);
+}
+
+/* Indicador liquid glass de la barra de navegación */
+.nav-pill {
+  background: rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -3px 8px rgba(255, 255, 255, 0.06);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .badge-pill {
