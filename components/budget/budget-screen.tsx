@@ -141,8 +141,10 @@ export function BudgetScreen({
           </div>
 
           <div
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
-              expenseMargin >= 0 ? 'bg-pos-soft text-pos' : 'bg-neg-soft text-neg'
+            className={`shrink-0 rounded-[14px] border px-3 py-1.5 text-xs font-medium ${
+              expenseMargin >= 0
+                ? 'border-[rgba(62,207,142,0.25)] bg-pos-soft text-pos shadow-[0_0_16px_rgba(62,207,142,0.12)]'
+                : 'border-[rgba(242,114,140,0.25)] bg-neg-soft text-neg shadow-[0_0_16px_rgba(242,114,140,0.12)]'
             }`}
           >
             {expenseMargin >= 0 ? 'dentro' : 'excedido'}
@@ -150,7 +152,7 @@ export function BudgetScreen({
         </div>
 
         {seededFromPrevious ? (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-xs text-text-muted">
+          <div className="neu mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-text-muted">
             <PencilLine size={13} />
             base copiada del mes anterior
           </div>
@@ -283,7 +285,7 @@ function BudgetRow({
   const barWidth = `${Math.min(100, Math.max(row.actualAmount > 0 ? 8 : 0, usageRatio * 100))}%`;
 
   return (
-    <div className="rounded-md border border-border bg-surface-2 p-4">
+    <div className="neu rounded-[18px] border border-white/[0.06] p-4">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -301,7 +303,7 @@ function BudgetRow({
 
         <div className="flex shrink-0 items-center gap-2">
           {isEditing ? (
-            <div className="relative flex h-12 w-[104px] items-center justify-end rounded-sm border border-accent bg-surface-1 px-3 text-right text-sm text-text">
+            <div className="relative flex h-12 w-[104px] items-center justify-end rounded-[14px] border border-accent bg-black/30 px-3 text-right text-sm text-text shadow-[inset_2px_2px_5px_rgba(0,0,0,0.5)]">
               <input
                 type="text"
                 inputMode="decimal"
@@ -330,10 +332,12 @@ function BudgetRow({
               }
               onStartEdit(row.categoryName);
             }}
-            className={`inline-flex h-10 w-10 items-center justify-center rounded-sm border transition ${
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-[14px] transition ${
               isSaved
-                ? 'border-pos bg-pos-soft text-pos'
-                : 'border-border bg-surface-1 text-text-muted hover:bg-surface-2'
+                ? 'border border-[rgba(62,207,142,0.4)] bg-pos-soft text-pos shadow-[0_0_12px_rgba(62,207,142,0.18)]'
+                : isEditing
+                  ? 'bg-accent text-white shadow-[0_3px_10px_rgba(61,99,194,0.4),inset_0_1px_0_rgba(255,255,255,0.22)]'
+                  : 'neu text-text-muted'
             }`}
             aria-label={isEditing ? `Guardar presupuesto de ${row.categoryName}` : `Editar presupuesto de ${row.categoryName}`}
           >
@@ -348,9 +352,9 @@ function BudgetRow({
         </div>
       </div>
 
-      <div className="mt-3 h-2 rounded-full bg-white/[0.06]">
+      <div className="bar-track mt-3 h-2.5 rounded-full">
         <div
-          className={`h-2 rounded-full ${
+          className={`h-2.5 rounded-full ${
             row.type === 'expense' ? (isOver ? 'bar-neg' : 'bar-accent') : 'bar-pos'
           }`}
           style={{ width: barWidth }}
@@ -362,7 +366,7 @@ function BudgetRow({
 
 function StatPill({ label, value, tone }: { label: string; value: number; tone: 'income' | 'expense' }) {
   return (
-    <div className="flex min-h-[118px] flex-col justify-between rounded-md border border-border bg-surface-2 p-4">
+    <div className="neu flex min-h-[118px] flex-col justify-between rounded-[18px] p-4">
       <p className="max-w-[8rem] text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <AnimatedValue
         value={value}
