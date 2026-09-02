@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, type ComponentType } from 'react';
-import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useTransition, type ComponentType } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Banknote, Check, Coins, Landmark, Wallet } from 'lucide-react';
 
 import type { AccountBalance } from '@/lib/domain/types';
@@ -13,6 +12,8 @@ type IconType = ComponentType<{ size?: number; strokeWidth?: number; className?:
 export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
   const selected = searchParams.get('account');
@@ -29,6 +30,15 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
     return search ? `${pathname}?${search}` : pathname;
   }
 
+  function selectAccount(accountName: string | null) {
+    setOpen(false);
+    // Navegación en transición: mantiene la página montada para que los
+    // números animen (AnimatedValue) en vez de mostrar la pantalla de carga.
+    startTransition(() => {
+      router.push(hrefFor(accountName), { scroll: false });
+    });
+  }
+
   return (
     <div className="relative">
       <button
@@ -36,7 +46,9 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
         onClick={() => setOpen((current) => !current)}
         aria-label="Mis cuentas"
         aria-expanded={open}
-        className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[16px] bg-accent text-white shadow-[0_4px_12px_rgba(61,99,194,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] transition active:scale-95"
+        className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[16px] bg-accent text-white shadow-[0_4px_12px_rgba(61,99,194,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] transition active:scale-95 ${
+          isPending ? 'animate-pulse' : ''
+        }`}
       >
         <Wallet size={20} />
       </button>
@@ -61,8 +73,7 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
             </div>
 
             <AccountOption
-              href={hrefFor(null)}
-              onClick={() => setOpen(false)}
+              onSelect={() => selectAccount(null)}
               label="Total"
               balance={totalBalance}
               active={!selected}
@@ -73,8 +84,7 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
             {accounts.map((account) => (
               <AccountOption
                 key={account.id}
-                href={hrefFor(account.name)}
-                onClick={() => setOpen(false)}
+                onSelect={() => selectAccount(account.name)}
                 label={account.name}
                 balance={account.balance}
                 active={selected === account.name}
@@ -89,16 +99,14 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
 }
 
 function AccountOption({
-  href,
-  onClick,
+  onSelect,
   label,
   balance,
   active,
   icon: Icon,
   highlight = false
 }: {
-  href: string;
-  onClick: () => void;
+  onSelect: () => void;
   label: string;
   balance: number;
   active: boolean;
@@ -106,10 +114,10 @@ function AccountOption({
   highlight?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={`mb-1 flex items-center gap-3 rounded-[14px] px-2.5 py-2.5 transition last:mb-0 ${
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`mb-1 flex w-full items-center gap-3 rounded-[14px] px-2.5 py-2.5 text-left transition last:mb-0 ${
         active ? 'border border-accent bg-accent-soft' : 'border border-transparent hover:bg-white/[0.05]'
       }`}
     >
@@ -127,7 +135,7 @@ function AccountOption({
       ) : (
         <span className="w-4 shrink-0" aria-hidden />
       )}
-    </Link>
+    </button>
   );
 }
 
