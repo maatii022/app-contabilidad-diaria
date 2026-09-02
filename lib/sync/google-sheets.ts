@@ -51,6 +51,7 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       amount: parseImportedAmount(transaction.amount),
       description: transaction.description,
       category_name: transaction.categoryName,
+      account_name: transaction.account && transaction.account.trim() ? transaction.account.trim() : null,
       last_synced_at: syncTimestamp,
       updated_at: syncTimestamp
     }));

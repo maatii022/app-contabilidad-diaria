@@ -109,6 +109,7 @@ export type GoogleSheetsSyncPayload = {
     amount: number;
     description: string;
     categoryName: string;
+    account?: string;
     sourceRow: number;
   }>;
   budgets: Array<{
