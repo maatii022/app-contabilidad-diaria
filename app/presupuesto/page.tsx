@@ -8,10 +8,11 @@ import { resolvePeriod } from '@/lib/utils/period';
 export default async function PresupuestoPage({
   searchParams
 }: {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; account?: string }>;
 }) {
-  const period = resolvePeriod(await searchParams);
-  const { data, budgets, seededFromPrevious, expenseCatalog, incomeCatalog } = await getBudgetPageData(period);
+  const params = await searchParams;
+  const period = resolvePeriod(params);
+  const { data, budgets, seededFromPrevious, expenseCatalog, incomeCatalog } = await getBudgetPageData(period, params.account);
 
   return (
     <AppShell period={period}>

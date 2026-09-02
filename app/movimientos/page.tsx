@@ -8,11 +8,11 @@ import { resolvePeriod } from '@/lib/utils/period';
 export default async function MovimientosPage({
   searchParams
 }: {
-  searchParams: Promise<{ type?: string; category?: string; q?: string; date?: string; year?: string; month?: string }>;
+  searchParams: Promise<{ type?: string; category?: string; q?: string; date?: string; year?: string; month?: string; account?: string }>;
 }) {
   const params = await searchParams;
   const period = resolvePeriod(params);
-  const transactions = await getTransactions(period);
+  const transactions = await getTransactions(period, params.account);
 
   return (
     <AppShell period={period}>

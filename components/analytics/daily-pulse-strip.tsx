@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowDown, ArrowRight, ArrowUp } from 'lucide-react';
 
 import type { TrendPoint } from '@/lib/domain/types';
@@ -10,6 +10,7 @@ import type { Period } from '@/lib/utils/period';
 
 export function DailyPulseStrip({ period, trend }: { period: Period; trend: TrendPoint[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const rows = useMemo(() => fillTrendDays(period, trend), [period, trend]);
   const maxAbsNet = useMemo(() => Math.max(...rows.map((point) => Math.abs(point.net)), 1), [rows]);
@@ -21,6 +22,11 @@ export function DailyPulseStrip({ period, trend }: { period: Period; trend: Tren
         month: String(period.month),
         date: point.date
       });
+
+      const account = searchParams.get('account');
+      if (account) {
+        query.set('account', account);
+      }
 
       router.push(`/movimientos?${query.toString()}`);
       return;

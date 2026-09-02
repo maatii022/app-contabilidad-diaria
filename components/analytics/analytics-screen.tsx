@@ -17,15 +17,17 @@ export function AnalyticsScreen({
   viewMode,
   data,
   previousData,
-  annualData
+  annualData,
+  accountName
 }: {
   period: Period;
   viewMode: 'monthly' | 'annual';
   data: DashboardData;
   previousData: DashboardData;
   annualData: AnnualAnalyticsData;
+  accountName?: string;
 }) {
-  const modeHrefBase = `year=${period.year}&month=${period.month}`;
+  const modeHrefBase = `year=${period.year}&month=${period.month}${accountName ? `&account=${encodeURIComponent(accountName)}` : ''}`;
 
   if (viewMode === 'annual') {
     const topExpense = annualData.expenseCategories[0] ?? null;

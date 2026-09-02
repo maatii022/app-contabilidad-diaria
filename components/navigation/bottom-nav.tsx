@@ -72,9 +72,11 @@ function buildNavHref(pathname: NavItem['href'], searchParams: { get(name: strin
   const nextSearchParams = new URLSearchParams();
   const year = searchParams.get('year');
   const month = searchParams.get('month');
+  const account = searchParams.get('account');
 
   if (year) nextSearchParams.set('year', year);
   if (month) nextSearchParams.set('month', month);
+  if (account) nextSearchParams.set('account', account);
 
   const search = nextSearchParams.toString();
   return search ? `${pathname}?${search}` : pathname;

@@ -8,10 +8,11 @@ import { resolvePeriod } from '@/lib/utils/period';
 export default async function ResumenPage({
   searchParams
 }: {
-  searchParams: Promise<{ year?: string; month?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; account?: string }>;
 }) {
-  const period = resolvePeriod(await searchParams);
-  const data = await getDashboardData(period);
+  const params = await searchParams;
+  const period = resolvePeriod(params);
+  const data = await getDashboardData(period, params.account);
 
   return (
     <AppShell period={period}>

@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarDays, Check, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
+import { WalletMenu } from '@/components/navigation/wallet-menu';
+import type { AccountBalance } from '@/lib/domain/types';
 import { formatNumericDate } from '@/lib/utils/dates';
 import { comparePeriods, getCurrentPeriod, getPeriodDateRange, getPeriodLabel, MIN_PERIOD, shiftPeriod, type Period } from '@/lib/utils/period';
 
-export function PeriodToolbar({ period }: { period: Period }) {
+export function PeriodToolbar({ period, accounts }: { period: Period; accounts: AccountBalance[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const prev = shiftPeriod(period, -1);
@@ -21,7 +23,10 @@ export function PeriodToolbar({ period }: { period: Period }) {
   return (
     <header className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <ManualSyncButton period={period} />
+        <div className="flex items-center gap-2">
+          {accounts.length > 0 ? <WalletMenu accounts={accounts} /> : null}
+          <ManualSyncButton period={period} />
+        </div>
 
         <div className="glass inline-flex items-center gap-2 px-2 py-2 text-white" style={{ borderRadius: 22 }}>
           {canGoPrev ? (

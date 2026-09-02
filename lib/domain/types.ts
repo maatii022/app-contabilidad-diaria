@@ -9,11 +9,26 @@ export type Transaction = {
   amount: number;
   description: string;
   categoryName: string;
+  accountName?: string;
   sourceSystem: 'google_sheets' | 'mock';
   sourceFileId?: string;
   sourceFileName?: string;
   sourceSheetName?: string;
   sourceRow?: number;
+};
+
+export type Account = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+  startingBalance: number;
+  startingYear: number | null;
+  startingMonth: number | null;
+};
+
+export type AccountBalance = Account & {
+  balance: number;
 };
 
 export type MonthlyBudget = {

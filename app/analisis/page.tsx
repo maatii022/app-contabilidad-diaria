@@ -9,30 +9,38 @@ import { resolvePeriod, shiftPeriod, type Period } from '@/lib/utils/period';
 export default async function AnalisisPage({
   searchParams
 }: {
-  searchParams: Promise<{ year?: string; month?: string; view?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; view?: string; account?: string }>;
 }) {
   const params = await searchParams;
   const period = resolvePeriod(params);
+  const account = params.account;
   const previousPeriod = shiftPeriod(period, -1);
   const viewMode = params.view === 'annual' ? 'annual' : 'monthly';
 
   const [data, previousData, annualData] = await Promise.all([
-    getDashboardData(period),
-    getDashboardData(previousPeriod),
-    getAnnualAnalyticsData(period)
+    getDashboardData(period, account),
+    getDashboardData(previousPeriod, account),
+    getAnnualAnalyticsData(period, account)
   ]);
 
   return (
     <AppShell period={period}>
-      <AnalyticsScreen period={period} viewMode={viewMode} data={data} previousData={previousData} annualData={annualData} />
+      <AnalyticsScreen
+        period={period}
+        viewMode={viewMode}
+        data={data}
+        previousData={previousData}
+        annualData={annualData}
+        accountName={account}
+      />
     </AppShell>
   );
 }
 
-async function getAnnualAnalyticsData(period: Period): Promise<AnnualAnalyticsData> {
+async function getAnnualAnalyticsData(period: Period, accountName?: string): Promise<AnnualAnalyticsData> {
   const months = Array.from({ length: period.month }, (_, index) => index + 1);
-  const monthDashboards = await Promise.all(months.map((month) => getDashboardData({ year: period.year, month })));
-  const allTransactions = await getTransactions();
+  const monthDashboards = await Promise.all(months.map((month) => getDashboardData({ year: period.year, month }, accountName)));
+  const allTransactions = await getTransactions(undefined, accountName);
   const yearTransactions = allTransactions.filter((transaction) => {
     const date = new Date(`${transaction.transactionDate}T00:00:00`);
     return date.getFullYear() === period.year && date.getMonth() + 1 <= period.month;

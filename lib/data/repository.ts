@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { mockMonthlyBudgets, mockOpeningBalance, mockTransactions } from '@/lib/domain/mock-data';
-import type { DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
+import type { Account, AccountBalance, DashboardData, MonthlyBudget, Transaction, TransactionType } from '@/lib/domain/types';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { syncPeriodFromGoogleSheets, writeBudgetValuesToGoogleSheets } from '@/lib/sync/google-sheets';
 import { buildDashboardData } from '@/lib/utils/finance';
@@ -16,11 +16,22 @@ type TransactionRow = {
   amount: number | string;
   description: string;
   category_name: string;
+  account_name: string | null;
   source_system: 'google_sheets' | 'mock';
   source_file_id: string | null;
   source_file_name: string | null;
   source_sheet_name: string | null;
   source_row: number | null;
+};
+
+type AccountRow = {
+  id: string;
+  name: string;
+  sort_order: number | string | null;
+  is_active: boolean | null;
+  starting_balance: number | string | null;
+  starting_year: number | string | null;
+  starting_month: number | string | null;
 };
 
 type MonthlyBudgetRow = {
@@ -39,11 +50,29 @@ type OpeningBalanceRow = {
   updated_at?: string;
 };
 
-export async function getDashboardData(period: Period = getCurrentPeriod()): Promise<DashboardData> {
+export async function getDashboardData(
+  period: Period = getCurrentPeriod(),
+  accountName?: string
+): Promise<DashboardData> {
   await ensurePeriodDataFresh(period);
 
-  const transactions = await fetchTransactions(period);
   const budgets = await getMonthlyBudgets(period.year, period.month);
+
+  if (accountName) {
+    const account = (await getAccounts()).find((item) => item.name === accountName);
+    const accountTransactions = await fetchTransactions(undefined, accountName);
+    const openingBalance = computeAccountOpening(account, accountTransactions, period);
+
+    return buildDashboardData({
+      year: period.year,
+      month: period.month,
+      openingBalance,
+      transactions: accountTransactions,
+      budgets
+    });
+  }
+
+  const transactions = await fetchTransactions(period);
   const openingBalance = await getOpeningBalance(period.year, period.month);
 
   return buildDashboardData({
@@ -55,11 +84,11 @@ export async function getDashboardData(period: Period = getCurrentPeriod()): Pro
   });
 }
 
-export async function getBudgetPageData(period: Period = getCurrentPeriod()) {
+export async function getBudgetPageData(period: Period = getCurrentPeriod(), accountName?: string) {
   await ensurePeriodDataFresh(period);
 
   const seededFromPrevious = await ensureBudgetSeededFromPrevious(period);
-  const data = await getDashboardData(period);
+  const data = await getDashboardData(period, accountName);
   const budgets = await getMonthlyBudgets(period.year, period.month);
 
   return {
@@ -71,12 +100,68 @@ export async function getBudgetPageData(period: Period = getCurrentPeriod()) {
   };
 }
 
-export async function getTransactions(period?: Period): Promise<Transaction[]> {
+export async function getTransactions(period?: Period, accountName?: string): Promise<Transaction[]> {
   if (period) {
     await ensurePeriodDataFresh(period);
   }
 
-  return fetchTransactions(period);
+  return fetchTransactions(period, accountName);
+}
+
+export async function getAccounts(): Promise<Account[]> {
+  const supabase = getServerSupabase();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as AccountRow[]).map(mapAccountRow);
+}
+
+export async function getAccountsWithBalances(period: Period = getCurrentPeriod()): Promise<AccountBalance[]> {
+  const accounts = await getAccounts();
+
+  if (accounts.length === 0) {
+    return [];
+  }
+
+  const supabase = getServerSupabase();
+
+  if (!supabase) {
+    return accounts.map((account) => ({ ...account, balance: account.startingBalance }));
+  }
+
+  const endExclusive = `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`;
+
+  const { data } = await supabase
+    .from('transactions')
+    .select('type, amount, transaction_date, account_name')
+    .not('account_name', 'is', null)
+    .lt('transaction_date', endExclusive);
+
+  const rows = (data ?? []) as Array<Pick<TransactionRow, 'type' | 'amount' | 'transaction_date' | 'account_name'>>;
+
+  return accounts.map((account) => {
+    const net = rows.reduce((sum, row) => {
+      if (row.account_name !== account.name || !isOnOrAfterStart(account, row.transaction_date)) {
+        return sum;
+      }
+      const signed = row.type === 'income' ? Number(row.amount) : -Number(row.amount);
+      return sum + (Number.isFinite(signed) ? signed : 0);
+    }, 0);
+
+    return { ...account, balance: account.startingBalance + net };
+  });
 }
 
 export async function getMonthlyBudgets(year: number, month: number): Promise<MonthlyBudget[]> {
@@ -214,27 +299,39 @@ async function ensureBudgetSeededFromPrevious(period: Period): Promise<boolean> 
   return true;
 }
 
-async function fetchTransactions(period?: Period): Promise<Transaction[]> {
+async function fetchTransactions(period?: Period, accountName?: string): Promise<Transaction[]> {
   const supabase = getServerSupabase();
 
   if (!supabase) {
-    return filterTransactionsByPeriod(mockTransactions, period);
+    const scoped = accountName
+      ? mockTransactions.filter((transaction) => transaction.accountName === accountName)
+      : mockTransactions;
+    return filterTransactionsByPeriod(scoped, period);
   }
 
-  const query = supabase
+  let query = supabase
     .from('transactions')
     .select('*')
     .order('transaction_date', { ascending: false })
     .order('created_at', { ascending: false });
 
-  const { data, error } = period
-    ? await query
-        .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
-        .lt('transaction_date', `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`)
-    : await query;
+  if (accountName) {
+    query = query.eq('account_name', accountName);
+  }
+
+  if (period) {
+    query = query
+      .gte('transaction_date', `${period.year}-${String(period.month).padStart(2, '0')}-01`)
+      .lt('transaction_date', `${nextPeriod(period).year}-${String(nextPeriod(period).month).padStart(2, '0')}-01`);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data) {
-    return filterTransactionsByPeriod(mockTransactions, period);
+    const scoped = accountName
+      ? mockTransactions.filter((transaction) => transaction.accountName === accountName)
+      : mockTransactions;
+    return filterTransactionsByPeriod(scoped, period);
   }
 
   const rows = data as TransactionRow[];
@@ -246,12 +343,58 @@ async function fetchTransactions(period?: Period): Promise<Transaction[]> {
     amount: Number(row.amount),
     description: row.description,
     categoryName: row.category_name,
+    accountName: row.account_name ?? undefined,
     sourceSystem: row.source_system,
     sourceFileId: row.source_file_id ?? undefined,
     sourceFileName: row.source_file_name ?? undefined,
     sourceSheetName: row.source_sheet_name ?? undefined,
     sourceRow: row.source_row ?? undefined
   }));
+}
+
+function mapAccountRow(row: AccountRow): Account {
+  return {
+    id: row.id,
+    name: row.name,
+    sortOrder: Number(row.sort_order ?? 0),
+    isActive: row.is_active ?? true,
+    startingBalance: Number(row.starting_balance ?? 0),
+    startingYear: row.starting_year != null ? Number(row.starting_year) : null,
+    startingMonth: row.starting_month != null ? Number(row.starting_month) : null
+  };
+}
+
+function accountStartDate(account: Account | undefined): string | null {
+  if (!account || account.startingYear == null || account.startingMonth == null) {
+    return null;
+  }
+  return `${account.startingYear}-${String(account.startingMonth).padStart(2, '0')}-01`;
+}
+
+function isOnOrAfterStart(account: Account, date: string): boolean {
+  const start = accountStartDate(account);
+  return start ? date >= start : true;
+}
+
+function computeAccountOpening(account: Account | undefined, accountTransactions: Transaction[], period: Period): number {
+  if (!account) {
+    return 0;
+  }
+
+  const monthStart = `${period.year}-${String(period.month).padStart(2, '0')}-01`;
+  const start = accountStartDate(account);
+
+  const net = accountTransactions.reduce((sum, transaction) => {
+    if (transaction.transactionDate >= monthStart) {
+      return sum;
+    }
+    if (start && transaction.transactionDate < start) {
+      return sum;
+    }
+    return sum + (transaction.type === 'income' ? transaction.amount : -transaction.amount);
+  }, 0);
+
+  return account.startingBalance + net;
 }
 
 async function fetchMonthlyBudgetRows(

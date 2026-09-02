@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import type { TrendPoint } from '@/lib/domain/types';
 import { formatCurrency } from '@/lib/utils/currency';
@@ -21,6 +21,7 @@ const MIN_BAR_HEIGHT = 8;
 
 export function DailyFlowChart({ trend, period, openingBalance }: { trend: TrendPoint[]; period: Period; openingBalance: number }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -65,6 +66,11 @@ export function DailyFlowChart({ trend, period, openingBalance }: { trend: Trend
         month: String(period.month),
         date: point.date
       });
+
+      const account = searchParams.get('account');
+      if (account) {
+        query.set('account', account);
+      }
 
       router.push(`/movimientos?${query.toString()}`);
       return;
