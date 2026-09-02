@@ -8,7 +8,7 @@ import { CalendarDays, Check, ChevronLeft, ChevronRight, RefreshCw } from 'lucid
 import { WalletMenu } from '@/components/navigation/wallet-menu';
 import type { AccountBalance } from '@/lib/domain/types';
 import { formatNumericDate } from '@/lib/utils/dates';
-import { comparePeriods, getCurrentPeriod, getPeriodDateRange, getPeriodLabel, MIN_PERIOD, shiftPeriod, type Period } from '@/lib/utils/period';
+import { comparePeriods, getCurrentPeriod, getPeriodDateRange, MIN_PERIOD, shiftPeriod, type Period } from '@/lib/utils/period';
 
 export function PeriodToolbar({ period, accounts }: { period: Period; accounts: AccountBalance[] }) {
   const pathname = usePathname();
@@ -22,40 +22,40 @@ export function PeriodToolbar({ period, accounts }: { period: Period; accounts: 
 
   return (
     <header className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {accounts.length > 0 ? <WalletMenu accounts={accounts} /> : null}
           <ManualSyncButton period={period} />
         </div>
 
-        <div className="glass inline-flex items-center gap-2 px-2 py-2 text-white" style={{ borderRadius: 22 }}>
+        <div className="glass inline-flex min-w-0 items-center gap-1 px-1.5 py-2 text-white" style={{ borderRadius: 22 }}>
           {canGoPrev ? (
             <Link
               href={buildPeriodHref(pathname, searchParams, prev)}
               aria-label="Mes anterior"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
             >
               <ChevronLeft size={16} />
             </Link>
           ) : (
-            <div className="h-9 w-9" />
+            <div className="h-8 w-8 shrink-0" />
           )}
 
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white/90">
-            <CalendarDays size={15} className="text-white/54" />
-            <span className="whitespace-nowrap">{getPeriodLabel(period)}</span>
+          <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full px-2 py-2 text-sm text-white/90">
+            <CalendarDays size={15} className="shrink-0 text-white/54" />
+            <span className="truncate">{formatShortPeriod(period)}</span>
           </div>
 
           {canGoNext ? (
             <Link
               href={buildPeriodHref(pathname, searchParams, next)}
               aria-label="Mes siguiente"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-white/76 transition hover:bg-white/[0.08] hover:text-white"
             >
               <ChevronRight size={16} />
             </Link>
           ) : (
-            <div className="h-9 w-9" />
+            <div className="h-8 w-8 shrink-0" />
           )}
         </div>
       </div>
@@ -132,6 +132,13 @@ function ManualSyncButton({ period }: { period: Period }) {
       {status === 'error' ? <RefreshCw size={16} className="text-neg" /> : icon}
     </button>
   );
+}
+
+function formatShortPeriod(period: Period) {
+  const label = new Intl.DateTimeFormat('es-ES', { month: 'short', year: 'numeric' })
+    .format(new Date(period.year, period.month - 1, 1))
+    .replace('.', '');
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function buildPeriodHref(pathname: string, currentSearchParams: { toString(): string }, period: Period) {

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
 
+import { AnimatedValue } from '@/components/shared/animated-value';
 import { SurfaceCard } from '@/components/shared/surface-card';
 import type { Transaction, TransactionType } from '@/lib/domain/types';
 import { formatCurrency } from '@/lib/utils/currency';
@@ -353,8 +354,7 @@ function TypeStatButton({
     >
       <p className="text-[11px] uppercase tracking-[0.18em] text-text-faint">{label}</p>
       <p className={`tnum mt-2 text-sm font-medium ${tone === 'income' ? 'text-pos' : 'text-neg'}`}>
-        {signed && value > 0 ? '+' : ''}
-        {formatCurrency(value)}
+        <AnimatedValue value={value} kind="currency" positivePrefix={signed} durationMs={420} />
       </p>
     </button>
   );
