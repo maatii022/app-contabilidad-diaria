@@ -93,6 +93,23 @@ export async function syncPeriodFromGoogleSheets(period: Period): Promise<Google
       }
     }
 
+    const accountRows = (payload.accounts ?? [])
+      .map((account, index) => ({
+        name: String(account.name ?? '').trim(),
+        sort_order: account.sortOrder ?? index + 1,
+        is_active: true,
+        updated_at: syncTimestamp
+      }))
+      .filter((account) => account.name.length > 0);
+
+    if (accountRows.length > 0) {
+      const { error: accountsError } = await supabase.from('accounts').upsert(accountRows, { onConflict: 'name' });
+
+      if (accountsError) {
+        throw accountsError;
+      }
+    }
+
     const { error: openingBalanceError } = await supabase.from('monthly_opening_balances').upsert(
       {
         year: payload.year,

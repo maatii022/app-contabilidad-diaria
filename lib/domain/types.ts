@@ -117,6 +117,10 @@ export type GoogleSheetsSyncPayload = {
     categoryName: string;
     plannedAmount: number;
   }>;
+  accounts?: Array<{
+    name: string;
+    sortOrder?: number;
+  }>;
 };
 
 export type GoogleSheetsSyncResult = {
