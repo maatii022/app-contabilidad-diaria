@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ComponentType } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Check, Wallet } from 'lucide-react';
+import { Banknote, Check, Coins, Landmark, Wallet } from 'lucide-react';
 
 import type { AccountBalance } from '@/lib/domain/types';
 import { formatCurrency } from '@/lib/utils/currency';
+
+type IconType = ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
 
 export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
   const pathname = usePathname();
@@ -49,8 +51,11 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
             className="fixed inset-0 z-40 cursor-default"
           />
 
-          <div className="glass absolute left-0 top-[60px] z-50 w-[300px] p-2" style={{ borderRadius: 22 }}>
-            <div className="flex items-center justify-between px-3 pb-2 pt-2.5">
+          <div
+            className="glass z-50 w-[320px] max-w-[calc(100vw-32px)] p-2"
+            style={{ borderRadius: 22, position: 'absolute', left: 0, top: 60 }}
+          >
+            <div className="flex items-center justify-between px-2.5 pb-2 pt-1.5">
               <span className="text-sm font-semibold text-text">Mis cuentas</span>
               <span className="text-[11px] text-text-faint">{accounts.length} cuentas</span>
             </div>
@@ -58,11 +63,10 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
             <AccountOption
               href={hrefFor(null)}
               onClick={() => setOpen(false)}
-              label="Todas las cuentas"
-              caption="total combinado"
+              label="Total"
               balance={totalBalance}
               active={!selected}
-              avatar={<Wallet size={17} />}
+              icon={Wallet}
               highlight
             />
 
@@ -74,7 +78,7 @@ export function WalletMenu({ accounts }: { accounts: AccountBalance[] }) {
                 label={account.name}
                 balance={account.balance}
                 active={selected === account.name}
-                avatar={initials(account.name)}
+                icon={accountIcon(account.name)}
               />
             ))}
           </div>
@@ -88,48 +92,55 @@ function AccountOption({
   href,
   onClick,
   label,
-  caption,
   balance,
   active,
-  avatar,
+  icon: Icon,
   highlight = false
 }: {
   href: string;
   onClick: () => void;
   label: string;
-  caption?: string;
   balance: number;
   active: boolean;
-  avatar: ReactNode;
+  icon: IconType;
   highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className={`mb-1.5 flex items-center gap-3 rounded-[16px] px-3 py-3 transition last:mb-0 ${
-        active
-          ? 'border border-accent bg-accent-soft'
-          : 'border border-transparent bg-white/[0.03] hover:bg-white/[0.06]'
+      className={`mb-1 flex items-center gap-3 rounded-[14px] px-2.5 py-2.5 transition last:mb-0 ${
+        active ? 'border border-accent bg-accent-soft' : 'border border-transparent hover:bg-white/[0.05]'
       }`}
     >
       <span
-        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] text-sm font-semibold ${
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${
           highlight ? 'bg-accent-soft text-[#8aa8ee]' : 'bg-white/[0.06] text-text-muted'
         }`}
       >
-        {avatar}
+        <Icon size={18} strokeWidth={2} />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-text">{label}</span>
-        {caption ? <span className="mt-0.5 block text-[11px] text-text-faint">{caption}</span> : null}
-      </span>
-      <span className="tnum shrink-0 text-sm font-semibold text-text">{formatCurrency(balance)}</span>
-      {active ? <Check size={17} className="ml-1 shrink-0 text-[#8aa8ee]" /> : null}
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{label}</span>
+      <span className="tnum shrink-0 text-[13px] font-semibold text-text">{formatCurrency(balance)}</span>
+      {active ? (
+        <Check size={16} className="shrink-0 text-[#8aa8ee]" />
+      ) : (
+        <span className="w-4 shrink-0" aria-hidden />
+      )}
     </Link>
   );
 }
 
-function initials(name: string) {
-  return name.trim().slice(0, 1).toUpperCase();
+function accountIcon(name: string): IconType {
+  const value = name.toLowerCase();
+
+  if (/(efectivo|cash|met[aá]lico|billete)/.test(value)) {
+    return Banknote;
+  }
+
+  if (/(eth|cripto|crypto|btc|bitcoin|binance|bybit|kraken|coinbase|wallet|ledger|metamask|solana|revolut)/.test(value)) {
+    return Coins;
+  }
+
+  return Landmark;
 }
